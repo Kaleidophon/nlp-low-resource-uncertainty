@@ -1,0 +1,2 @@
+spacy
+git+nlp-uncertainty-zoo

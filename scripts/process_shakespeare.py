@@ -18,6 +18,7 @@ if __name__ == "__main__":
 
     with open(OUTFILE, "a") as out_file:
         for file in shakespeare_files:
+            print(file)
             path = os.path.join(SHAKESPEARE_DIR, file)
 
             with open(path, "r") as infile:
@@ -25,7 +26,13 @@ if __name__ == "__main__":
                 while True:
                     line = infile.readline()
 
-                    if line.strip() == "ACT 1":
+                    if line.strip() in (
+                        "ACT 1",
+                        "TO THE RIGHT HONORABLE",
+                        "TO THE RIGHT",
+                        "1",
+                        "The Phoenix and Turtle",
+                    ):
                         break
 
                 prefix = ""

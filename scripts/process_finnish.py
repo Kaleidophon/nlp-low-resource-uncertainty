@@ -1,17 +1,17 @@
 """
-Process the Dan+ dataset. In this case, it is just about using at most single
-NE tag per word and selecting the train file.
+Process the Finnish UD dataset.
 """
 
+# STD
 import os
 
-DATA_DIR = "../data/raw/danish"
-TARGET_DIR = "../data/processed/danish"
+DATA_DIR = "../data/raw/finnish"
+TARGET_DIR = "../data/processed/finnish"
 FILES = {
-    "da_news_train.tsv": "train.csv",
-    "da_news_dev.tsv": "val.csv",
-    "da_news_test.tsv": "test.csv",
-    "da_twitter_test.tsv": "ood_test.csv",
+    "fi_tdt-ud-train.conllu": "train.csv",
+    "fi_tdt-ud-dev.conllu": "val.csv",
+    "fi_tdt-ud-test.conllu": "test.csv",
+    "fi_ood-ud-test.conllu": "ood_test.csv",
 }
 
 
@@ -33,7 +33,10 @@ if __name__ == "__main__":
                     out_file.write(f"{' '.join(tokens)}\t{' '.join(labels)}\n")
                     tokens, labels = [], []
 
+                elif line.startswith("#"):
+                    continue
+
                 else:
                     parts = line.split("\t")
-                    tokens.append(parts[0])
-                    labels.append(parts[1])
+                    tokens.append(parts[1])
+                    labels.append(parts[3])
