@@ -11,7 +11,7 @@ FILES = {
     "da_news_train.tsv": "train.csv",
     "da_news_dev.tsv": "val.csv",
     "da_news_test.tsv": "test.csv",
-    "da_twitter_test.tsv": "ood_test.csv",
+    "da_twitter_test.tsv": "ood_test.txt",
 }
 
 

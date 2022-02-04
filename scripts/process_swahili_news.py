@@ -7,7 +7,7 @@ from spacy.pipeline import Sentencizer
 from spacy.lang.en import English
 
 DATA_PATH = "../data/raw/swahili/train.csv"
-TARGET_PATH = "../data/processed/swahili/ood_test.csv"
+TARGET_PATH = "../data/processed/swahili/ood_test.txt"
 
 
 if __name__ == "__main__":

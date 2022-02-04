@@ -11,7 +11,7 @@ FILES = {
     "fi_tdt-ud-train.conllu": "train.csv",
     "fi_tdt-ud-dev.conllu": "val.csv",
     "fi_tdt-ud-test.conllu": "test.csv",
-    "fi_ood-ud-test.conllu": "ood_test.csv",
+    "fi_ood-ud-test.conllu": "ood_test.txt",
 }
 
 

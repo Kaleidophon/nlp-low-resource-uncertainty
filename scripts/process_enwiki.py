@@ -9,7 +9,7 @@ import random
 
 # CONST
 FILE_PATHS = {
-    "../data/raw/english/enwiki.txt": "../data/processed/english/",
+    "../data/raw/english/enwiki_small.txt": "../data/processed/english/",
     # "../data/raw/swahili/swwiki.txt": "../data/processed/swahili/"
 }  # Define input and outputs paths for wiki files
 SPLITS = (0.8, 0.1, 0.1)
@@ -24,14 +24,13 @@ if __name__ == "__main__":
         val_path = os.path.join(out_dir, "val.txt")
         test_path = os.path.join(out_dir, "test.txt")
 
-        with codecs.open(in_path, "r", "utf-8", errors="ignore") as in_file:
+        with codecs.open(in_path, "r", "Windows-1252", errors="ignore") as in_file:
             with codecs.open(train_path, "w", "utf-8") as train_file, codecs.open(
                 val_path, "w", "utf-8"
             ) as val_file, codecs.open(test_path, "w", "utf-8") as test_file:
                 article_lines = []
 
                 for line in in_file.readlines():
-                    print(line)
                     line = line.strip()
 
                     if line.startswith("<doc"):
