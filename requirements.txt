@@ -1,3 +1,6 @@
 spacy
 git+nlp-uncertainty-zoo
 transformers
+seaborn
+numpy
+pandas
