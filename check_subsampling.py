@@ -3,7 +3,7 @@ Create sub-sampled version of training sets and check corpus statistics to ensur
 """
 
 # STD
-from collections import Counter, defaultdict
+from collections import Counter
 from typing import Tuple, List, Optional
 
 # EXT
@@ -15,6 +15,7 @@ from nlp_uncertainty_zoo.utils.samplers import (
     LanguageModellingSampler,
     TokenClassificationSampler,
 )
+from nlp_uncertainty_zoo.utils.data import LanguageModellingDatasetBuilder
 from torch.utils.data import DataLoader
 
 # PROJECT
@@ -27,20 +28,12 @@ SAMPLING_PARAMS_LANGUAGE_MODELLING = {
     "seed": 1234,
     "sample_range": [5, 15],
 }
-TARGET_SIZES = [50, 250, 500, 1000]
+TARGET_SIZES = [100, 250, 500, 1000]
 DATA_DIR = "data/processed"
 MAX_LENGTH = 50
 BATCH_SIZE = 1
 IGNORE_TOKENS = [-100, 0, 1, 2, 3, 4]
 IMG_PATH = "./img"
-
-
-# TODO: Load datasets
-# TODO: Implement comparison metrics between original and subsampled corpus:
-# - Sentence length distribution
-# - Coverage of vocabulary
-# - Distribution of classes
-# TODO: Plot results
 
 
 def collect_sentence_length_and_class_dict(
@@ -86,14 +79,91 @@ def compute_coverage(
     return type_percentage, token_percentage
 
 
+def plot_coverage(
+    sizes: List[int],
+    type_coverages: List[float],
+    token_coverage: List[float],
+    title: Optional[str] = None,
+    save_path: Optional[str] = None,
+):
+    """
+    Plot the type and token coverage as a function of sub-sampled corpus size.
+    """
+    data = pd.DataFrame.from_dict(
+        {
+            "size": sizes * 2,
+            "coverage": type_coverages + token_coverage,
+            "kind": ["type"] * len(sizes) + ["token"] * len(sizes),
+        }
+    )
+
+    sns.set_palette("viridis")
+    plot = sns.barplot(
+        data=data, x="size", y="coverage", hue="kind", alpha=0.6, ci=None
+    )
+
+    if title:
+        plot.set_title(title)
+
+    if save_path is None:
+        plt.show()
+
+    else:
+        plt.savefig(save_path)
+
+    plt.close()
+
+
 def plot_dists(
-    freqs_orig: Counter, freqs_sampled: Counter, top_n: Optional[int] = None
+    freqs_orig: Counter,
+    freqs_sampled: Counter,
+    top_n: Optional[int] = None,
+    title: Optional[str] = None,
+    save_path: Optional[str] = None,
 ):
     """
     Plot distributions of the top(-n) tokens and labels in the same histogram.
     """
-    # TODO
-    ...
+    if top_n is not None:
+        freqs_orig = dict(freqs_orig.most_common(top_n))
+        freqs_sampled = {type_: freqs_sampled[type_] for type_ in freqs_orig}
+
+    # Sort keys by frequency, decendingly
+    sorted_keys = list(zip(*sorted(freqs_orig.items(), key=lambda t: t[1])))[0]
+
+    num_types = len(freqs_orig)
+    total_orig = sum(freqs_orig.values())
+    total_sampled = sum(freqs_sampled.values())
+    freqs = np.zeros(2 * num_types)
+
+    for i, key in enumerate(sorted_keys):
+        freqs[i] = freqs_orig.get(key, 0) / total_orig
+        freqs[i + num_types] = freqs_sampled.get(key, 0) / total_sampled
+
+    data = pd.DataFrame.from_dict(
+        {
+            "type": list(freqs_orig.values()) * 2,
+            "relative frequencies": freqs,
+            "corpus": ["original"] * num_types + ["subsampled"] * num_types,
+        }
+    )
+
+    plot = sns.barplot(
+        data=data, x="type", y="relative frequencies", hue="corpus", alpha=0.6, ci=None
+    )
+    sns.set(rc={"figure.figsize": (12, 8)})
+    plot.set(xticklabels=[])
+
+    if title:
+        plot.set_title(title)
+
+    if save_path is None:
+        plt.show()
+
+    else:
+        plt.savefig(save_path)
+
+    plt.close()
 
 
 def plot_length_dists(
@@ -122,14 +192,15 @@ def plot_length_dists(
         }
     )
 
+    sns.set(rc={"figure.figsize": (12, 8)})
     plot = sns.barplot(
         data=data,
         x="sequence_length",
         y="relative frequencies",
         hue="corpus",
         alpha=0.6,
+        ci=None,
     )
-    sns.set(rc={"figure.figsize": (12, 8)})
 
     if title:
         plot.set_title(title)
@@ -171,6 +242,8 @@ if __name__ == "__main__":
         )
         del orig_data
 
+        type_coverages, token_coverages = [], []
+
         for target_size in TARGET_SIZES:
             subsampled_data = builder(
                 data_dir=DATA_DIR,
@@ -192,10 +265,45 @@ if __name__ == "__main__":
             del subsampled_data
 
             # Plot results
-            print(compute_coverage(orig_token_freqs, sampled_token_freqs))
+            type_cover, token_cover = compute_coverage(
+                orig_token_freqs, sampled_token_freqs
+            )
+            type_coverages.append(type_cover)
+            token_coverages.append(token_cover)
+
+            # Plot sentence length distributions
             plot_length_dists(
                 orig_seq_freqs,
                 sampled_seq_freqs,
                 title=f"Relative sentence lengths frequencies (n={target_size})",
                 save_path=f"{IMG_PATH}/{dataset_name}_seq_lengths_{target_size}.png",
             )
+
+            # Plot token distributions
+            plot_dists(
+                orig_token_freqs,
+                sampled_token_freqs,
+                top_n=100,
+                title=f"Relative type frequencies (n={target_size})",
+                save_path=f"{IMG_PATH}/{dataset_name}_type_freqs_{target_size}.png",
+            )
+
+            # Plot task distributions
+            plot_dists(
+                orig_label_freqs,
+                sampled_label_freqs,
+                top_n=100
+                if isinstance(builder, LanguageModellingDatasetBuilder)
+                else None,
+                title=f"Relative type frequencies (n={target_size})",
+                save_path=f"{IMG_PATH}/{dataset_name}_class_freqs_{target_size}.png",
+            )
+
+        # Plot coverages a function of sample size
+        plot_coverage(
+            TARGET_SIZES,
+            type_coverages,
+            token_coverages,
+            title="Type and token coverage of the sub-sampled vocabulary",
+            save_path=f"{IMG_PATH}/{dataset_name}_coverage.png",
+        )
