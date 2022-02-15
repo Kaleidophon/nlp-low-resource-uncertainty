@@ -19,14 +19,19 @@ from nlp_uncertainty_zoo.utils.data import LanguageModellingDatasetBuilder
 from torch.utils.data import DataLoader
 
 # PROJECT
-from src.data import DanPlusBuilder, FinnishUDBuilder, SwahiliWikiBuilder
+from src.data import (
+    DanPlusBuilder,
+    FinnishUDBuilder,
+    SwahiliWikiBuilder,
+    EnglishWikiBuilder,
+)
 
 # CONST
 SAMPLING_PARAMS_TOKEN_PRED = {"num_jobs": 2, "seed": 1234}
 SAMPLING_PARAMS_LANGUAGE_MODELLING = {
     "num_jobs": 2,
     "seed": 1234,
-    "sample_range": [5, 15],
+    "sample_range": [0, 3],
 }
 TARGET_SIZES = [100, 250, 500, 1000]
 DATA_DIR = "data/processed"
@@ -34,6 +39,17 @@ MAX_LENGTH = 50
 BATCH_SIZE = 1
 IGNORE_TOKENS = [-100, 0, 1, 2, 3, 4]
 IMG_PATH = "./img"
+PLOT_STYLE = {
+    "axes.facecolor": "white",
+    "figure.facecolor": "white",
+    "axes.spines.left": True,
+    "axes.spines.bottom": True,
+    "axes.spines.right": True,
+    "axes.spines.top": True,
+    "axes.edgecolor": ".15",
+    "grid.color": ".8",
+    "ytick.left": True,
+}
 
 
 def collect_sentence_length_and_class_dict(
@@ -97,21 +113,31 @@ def plot_coverage(
         }
     )
 
-    sns.set_palette("viridis")
-    plot = sns.barplot(
-        data=data, x="size", y="coverage", hue="kind", alpha=0.6, ci=None
-    )
+    with sns.axes_style("whitegrid"):
+        sns.set(font_scale=1.3, rc={"xtick.bottom": True, **PLOT_STYLE})
+        sns.set_palette("viridis")
+        plot = sns.barplot(
+            data=data,
+            x="size",
+            y="coverage",
+            hue="kind",
+            alpha=0.8,
+            ci=None,
+            edgecolor="black",
+        )
 
-    if title:
-        plot.set_title(title)
+        if title:
+            plot.set_title(title)
 
-    if save_path is None:
-        plt.show()
+        plt.tight_layout()
 
-    else:
-        plt.savefig(save_path)
+        if save_path is None:
+            plt.show()
 
-    plt.close()
+        else:
+            plt.savefig(save_path)
+
+        plt.close()
 
 
 def plot_dists(
@@ -148,22 +174,31 @@ def plot_dists(
         }
     )
 
-    plot = sns.barplot(
-        data=data, x="type", y="relative frequencies", hue="corpus", alpha=0.6, ci=None
-    )
-    sns.set(rc={"figure.figsize": (12, 8)})
-    plot.set(xticklabels=[])
+    with sns.axes_style("whitegrid"):
+        sns.set(rc={"figure.figsize": (15, 10), **PLOT_STYLE}, font_scale=1.3)
+        plot = sns.barplot(
+            data=data,
+            x="type",
+            y="relative frequencies",
+            hue="corpus",
+            alpha=0.8,
+            ci=None,
+            edgecolor="black",
+        )
+        plot.set(xticklabels=[])
 
-    if title:
-        plot.set_title(title)
+        if title:
+            plot.set_title(title)
 
-    if save_path is None:
-        plt.show()
+        plt.tight_layout()
 
-    else:
-        plt.savefig(save_path)
+        if save_path is None:
+            plt.show()
 
-    plt.close()
+        else:
+            plt.savefig(save_path)
+
+        plt.close()
 
 
 def plot_length_dists(
@@ -192,41 +227,55 @@ def plot_length_dists(
         }
     )
 
-    sns.set(rc={"figure.figsize": (12, 8)})
-    plot = sns.barplot(
-        data=data,
-        x="sequence_length",
-        y="relative frequencies",
-        hue="corpus",
-        alpha=0.6,
-        ci=None,
-    )
+    with sns.axes_style("whitegrid"):
+        sns.set(
+            rc={"figure.figsize": (14, 10), "xtick.bottom": True, **PLOT_STYLE},
+            font_scale=1.3,
+        )
 
-    if title:
-        plot.set_title(title)
+        plot = sns.barplot(
+            data=data,
+            x="sequence_length",
+            y="relative frequencies",
+            hue="corpus",
+            alpha=0.8,
+            ci=None,
+            edgecolor="black",
+        )
 
-    if save_path is None:
-        plt.show()
+        for i, label in enumerate(plot.xaxis.get_ticklabels()):
+            if i % 5 != 0:
+                label.set_visible(False)
 
-    else:
-        plt.savefig(save_path)
+        if title:
+            plot.set_title(title)
 
-    plt.close()
+        plt.tight_layout()
+
+        if save_path is None:
+            plt.show()
+
+        else:
+            plt.savefig(save_path)
+
+        plt.close()
 
 
 if __name__ == "__main__":
 
     for dataset_name, builder, sampler_class, sampler_kwargs in zip(
-        ["dan+", "finnish_ud", "swahili_wiki"],
-        [DanPlusBuilder, FinnishUDBuilder, SwahiliWikiBuilder],
+        ["dan+", "finnish_ud", "swahili_wiki", "english_wiki"],
+        [DanPlusBuilder, FinnishUDBuilder, SwahiliWikiBuilder, EnglishWikiBuilder],
         [
             TokenClassificationSampler,
             TokenClassificationSampler,
+            LanguageModellingSampler,
             LanguageModellingSampler,
         ],
         [
             SAMPLING_PARAMS_TOKEN_PRED,
             SAMPLING_PARAMS_TOKEN_PRED,
+            SAMPLING_PARAMS_LANGUAGE_MODELLING,
             SAMPLING_PARAMS_LANGUAGE_MODELLING,
         ],
     ):

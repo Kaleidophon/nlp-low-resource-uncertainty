@@ -17,8 +17,6 @@ from transformers import (
     BertTokenizer,
 )
 
-# TODO: Add English Wikipedia here
-
 
 class FinnishUDBuilder(ClassificationDatasetBuilder):
     """
@@ -74,6 +72,37 @@ class SwahiliWikiBuilder(LanguageModellingDatasetBuilder):
                 "valid": f"{data_dir}/swahili/val.txt",
                 "test": f"{data_dir}/swahili/test.txt",
                 "ood_test": f"{data_dir}/swahili/ood_test.txt",
+            },
+            type_="next_token_prediction",
+            tokenizer=BertTokenizer.from_pretrained("bert-base-multilingual-cased"),
+            max_length=max_length,
+            sampler_class=sampler_class,
+            sampler_kwargs=sampler_kwargs,
+            num_jobs=num_jobs,
+        )
+
+
+class EnglishWikiBuilder(LanguageModellingDatasetBuilder):
+    """
+    Dataset class for the Swahili Wikipedia.
+    """
+
+    def __init__(
+        self,
+        data_dir: str,
+        max_length: int,
+        sampler_class: Optional[Type] = None,
+        sampler_kwargs: Optional[SamplerKwargs] = None,
+        num_jobs: Optional[int] = 1,
+    ):
+        super().__init__(
+            name="english_wiki",
+            data_dir=data_dir,
+            splits={
+                "train": f"{data_dir}/english/train.txt",
+                "valid": f"{data_dir}/english/val.txt",
+                "test": f"{data_dir}/english/test.txt",
+                "ood_test": f"{data_dir}/english/ood_test.txt",
             },
             type_="next_token_prediction",
             tokenizer=BertTokenizer.from_pretrained("bert-base-multilingual-cased"),

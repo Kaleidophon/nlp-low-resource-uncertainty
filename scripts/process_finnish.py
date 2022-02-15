@@ -30,7 +30,8 @@ if __name__ == "__main__":
                 line = line.replace('"', "'")
 
                 if line == "":
-                    out_file.write(f"{' '.join(tokens)}\t{' '.join(labels)}\n")
+                    if len(tokens) == len(labels):
+                        out_file.write(f"{' '.join(tokens)}\t{' '.join(labels)}\n")
                     tokens, labels = [], []
 
                 elif line.startswith("#"):
