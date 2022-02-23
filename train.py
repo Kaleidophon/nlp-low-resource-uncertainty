@@ -1,7 +1,7 @@
 # CONST
 BERT_MODELS = {
-    "english": "bert-base-uncased",
+    "enwiki": "bert-base-uncased",
     "danplus": "danbert-small-cased",
-    "finnish": "bert-base-finnish-cased-v1",
-    "swahili": "bert-base-multilingual-cased",
+    "finnish_ud": "bert-base-finnish_ud-cased-v1",
+    "swwiki": "bert-base-multilingual-cased",
 }

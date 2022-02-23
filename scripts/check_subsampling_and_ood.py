@@ -34,11 +34,11 @@ SAMPLING_PARAMS_LANGUAGE_MODELLING = {
     "sample_range": [0, 3],
 }
 TARGET_SIZES = [100, 250, 500, 1000]
-DATA_DIR = "data/processed"
+DATA_DIR = "../data/processed"
 MAX_LENGTH = 50
 BATCH_SIZE = 1
 IGNORE_TOKENS = [-100, 0, 1, 2, 3, 4]
-IMG_PATH = "./img"
+IMG_PATH = "../img"
 PLOT_STYLE = {
     "axes.facecolor": "white",
     "figure.facecolor": "white",
@@ -114,7 +114,7 @@ def plot_coverage(
     )
 
     with sns.axes_style("whitegrid"):
-        sns.set(font_scale=1.3, rc={"xtick.bottom": True, **PLOT_STYLE})
+        sns.set(font_scale=3, rc={"xtick.bottom": True, **PLOT_STYLE})
         sns.set_palette("viridis")
         plot = sns.barplot(
             data=data,
@@ -146,6 +146,7 @@ def plot_dists(
     top_n: Optional[int] = None,
     title: Optional[str] = None,
     save_path: Optional[str] = None,
+    compare_label: str = "subsampled",
 ):
     """
     Plot distributions of the top(-n) tokens and labels in the same histogram.
@@ -170,12 +171,12 @@ def plot_dists(
         {
             "type": list(freqs_orig.values()) * 2,
             "relative frequencies": freqs,
-            "corpus": ["original"] * num_types + ["subsampled"] * num_types,
+            "corpus": ["original"] * num_types + [compare_label] * num_types,
         }
     )
 
     with sns.axes_style("whitegrid"):
-        sns.set(rc={"figure.figsize": (15, 10), **PLOT_STYLE}, font_scale=1.3)
+        sns.set(rc={"figure.figsize": (15, 10), **PLOT_STYLE}, font_scale=3)
         plot = sns.barplot(
             data=data,
             x="type",
@@ -206,6 +207,7 @@ def plot_length_dists(
     freqs_sampled: Counter,
     title: Optional[str] = None,
     save_path: Optional[str] = None,
+    compare_label: str = "subsampled",
 ):
     """
     Plot distributions of sentence lengths in the same histogram.
@@ -223,14 +225,14 @@ def plot_length_dists(
         {
             "sequence_length": list(range(max_length)) + list(range(max_length)),
             "relative frequencies": freqs,
-            "corpus": ["original"] * max_length + ["subsampled"] * max_length,
+            "corpus": ["original"] * max_length + [compare_label] * max_length,
         }
     )
 
     with sns.axes_style("whitegrid"):
         sns.set(
             rc={"figure.figsize": (14, 10), "xtick.bottom": True, **PLOT_STYLE},
-            font_scale=1.3,
+            font_scale=3,
         )
 
         plot = sns.barplot(
@@ -264,7 +266,7 @@ def plot_length_dists(
 if __name__ == "__main__":
 
     for dataset_name, builder, sampler_class, sampler_kwargs in zip(
-        ["dan+", "finnish_ud", "swahili_wiki", "english_wiki"],
+        ["danplus", "finnish_ud", "swahili_wiki", "english_wiki"],
         [DanPlusBuilder, FinnishUDBuilder, SwahiliWikiBuilder, EnglishWikiBuilder],
         [
             TokenClassificationSampler,
@@ -289,8 +291,48 @@ if __name__ == "__main__":
         ) = collect_sentence_length_and_class_dict(
             orig_data["train"], ignore_tokens=IGNORE_TOKENS
         )
+
+        # Perform analyses on OOD data
+        (
+            ood_seq_freqs,
+            ood_token_freqs,
+            ood_label_freqs,
+        ) = collect_sentence_length_and_class_dict(
+            orig_data["ood_test"], ignore_tokens=IGNORE_TOKENS
+        )
         del orig_data
 
+        # Plot those results
+        # Plot sentence length distributions
+        plot_length_dists(
+            orig_seq_freqs,
+            ood_seq_freqs,
+            title="Relative sentence length frequencies",
+            save_path=f"{IMG_PATH}/{dataset_name}_seq_lengths_ood.png",
+            compare_label="ood",
+        )
+
+        # Plot token distributions
+        plot_dists(
+            orig_token_freqs,
+            ood_token_freqs,
+            top_n=50,
+            title="Relative type frequencies",
+            save_path=f"{IMG_PATH}/{dataset_name}_type_freqs_ood.png",
+            compare_label="ood",
+        )
+
+        # Plot task distributions
+        plot_dists(
+            orig_label_freqs,
+            ood_label_freqs,
+            top_n=50 if isinstance(builder, LanguageModellingDatasetBuilder) else None,
+            title="Relative type frequencies",
+            save_path=f"{IMG_PATH}/{dataset_name}_class_freqs_ood.png",
+            compare_label="ood",
+        )
+
+        # Perform the same tests for sub-samples of increasing size
         type_coverages, token_coverages = [], []
 
         for target_size in TARGET_SIZES:
@@ -324,7 +366,7 @@ if __name__ == "__main__":
             plot_length_dists(
                 orig_seq_freqs,
                 sampled_seq_freqs,
-                title=f"Relative sentence lengths frequencies (n={target_size})",
+                title=f"Relative sentence length frequencies (n={target_size})",
                 save_path=f"{IMG_PATH}/{dataset_name}_seq_lengths_{target_size}.png",
             )
 
@@ -332,7 +374,7 @@ if __name__ == "__main__":
             plot_dists(
                 orig_token_freqs,
                 sampled_token_freqs,
-                top_n=100,
+                top_n=50,
                 title=f"Relative type frequencies (n={target_size})",
                 save_path=f"{IMG_PATH}/{dataset_name}_type_freqs_{target_size}.png",
             )
@@ -341,7 +383,7 @@ if __name__ == "__main__":
             plot_dists(
                 orig_label_freqs,
                 sampled_label_freqs,
-                top_n=100
+                top_n=50
                 if isinstance(builder, LanguageModellingDatasetBuilder)
                 else None,
                 title=f"Relative type frequencies (n={target_size})",

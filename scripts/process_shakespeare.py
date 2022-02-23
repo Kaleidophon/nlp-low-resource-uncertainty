@@ -7,7 +7,7 @@ import re
 import os
 
 SHAKESPEARE_DIR = "../data/raw/english/shakespeares"
-OUTFILE = "../data/processed/english/ood_test.txt"
+OUTFILE = "../data/processed/enwiki/ood_test.txt"
 
 
 if __name__ == "__main__":

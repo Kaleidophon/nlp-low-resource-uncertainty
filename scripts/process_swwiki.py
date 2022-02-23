@@ -9,8 +9,8 @@ import random
 
 # CONST
 FILE_PATHS = {
-    # "../data/raw/english/enwiki.txt": "../data/processed/english/",
-    "../data/raw/swahili/swwiki.txt": "../data/processed/swahili/"
+    # "../data/raw/enwiki/enwiki.txt": "../data/processed/enwiki/",
+    "../data/raw/swwiki/swwiki.txt": "../data/processed/swwiki/"
 }  # Define input and outputs paths for wiki files
 SPLITS = (0.8, 0.1, 0.1)
 MIN_TOKENS = 4

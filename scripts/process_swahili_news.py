@@ -1,5 +1,5 @@
 """
-Process the swahili news classification dataset.
+Process the swwiki news classification dataset.
 """
 
 # EXT
@@ -7,7 +7,7 @@ from spacy.pipeline import Sentencizer
 from spacy.lang.en import English
 
 DATA_PATH = "../data/raw/swahili/train.csv"
-TARGET_PATH = "../data/processed/swahili/ood_test.txt"
+TARGET_PATH = "../data/processed/swwiki/ood_test.txt"
 
 
 if __name__ == "__main__":

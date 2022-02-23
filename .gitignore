@@ -132,4 +132,5 @@ dmypy.json
 data/raw/
 runs/
 secret.py
+sweep.py
 emissions/

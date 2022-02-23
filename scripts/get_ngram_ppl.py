@@ -45,27 +45,25 @@ RESULTS_DIR = "./"
 
 
 def get_srilm_perplexity(train_path: str, test_path: str) -> float:
-    ngrams_path = "./temp.lm"
-    weights_path = "./temp2.lm"
+    ngrams_paths = ["./uni.lm", "./bi.lm", "./tri.lm"]
 
     # Build n-gram counts and interpolation weights
-    os.system(
-        f"{RELATIVE_SRILM_CMD_PATH}/ngram-count -text {train_path} -lm {ngrams_path} -order 3 -gt1min 5"
-    )
-    os.system(
-        f"{RELATIVE_SRILM_CMD_PATH}/ngram-count -text {train_path} -init-lm {ngrams_path} -lm {weights_path} -order 3"
-    )
+    for i, path in enumerate(ngrams_paths):
+        os.system(
+            f"{RELATIVE_SRILM_CMD_PATH}/ngram-count -text {train_path} -lm {path} -order {i+1} -gt1min 5"
+        )
 
     # Get results
     stream = os.popen(
-        f"{RELATIVE_SRILM_CMD_PATH}/ngram -lm {weights_path} -ppl {test_path}"
+        f"{RELATIVE_SRILM_CMD_PATH}/ngram -lm {ngrams_paths[0]} -mix-lm {ngrams_paths[1]} -mix-lm2 {ngrams_paths[2]} "
+        f"-lambda 0.33 0.33 0.33 -ppl {test_path}"
     )
     output = str(stream.read())
     ppl = float(output.strip().split()[-3])
 
     # Clean up
-    os.remove(ngrams_path)
-    os.remove(weights_path)
+    for path in ngrams_paths:
+        os.remove(path)
 
     return ppl
 
@@ -80,7 +78,6 @@ def write_dl_to_file(
             line = tokenizer.decode(
                 input_ids[0],
                 skip_special_tokens=True,
-                clean_up_tokenization_spaces=False,
             )
             tmp_file.write(f"{line}\n")
 
@@ -93,11 +90,9 @@ if __name__ == "__main__":
         "PATH"
     ] = f"{os.environ['PATH']}:{os.path.abspath(RELATIVE_SRILM_PATH)}/bin/{MACHINE_TYPE}"
 
-    # TODO: Also score OOD datasets
-
     # Sub-sample training data and save to temporary file
     for dataset_name, builder, sampler_class, sampler_kwargs in zip(
-        ["dan+", "finnish_ud", "swahili_wiki", "english_wiki"],
+        ["danplus", "finnish_ud", "swahili_wiki", "english_wiki"],
         [DanPlusBuilder, FinnishUDBuilder, SwahiliWikiBuilder, EnglishWikiBuilder],
         [
             TokenClassificationSampler,
@@ -115,18 +110,25 @@ if __name__ == "__main__":
         tmp_path = "./tmp.txt"
         tmp_train_path = "./tmp_train.txt"
         tmp_test_path = "./tmp_test.txt"
+        tmp_ood_test_path = "./tmp_ood_test.txt"
 
         # Retrieve ppl of original corpus
         data_builder = builder(data_dir=DATA_DIR, num_jobs=2, max_length=MAX_LENGTH)
-        orig_data = data_builder.build(BATCH_SIZE, shuffle=True)
+        orig_data = data_builder.build(BATCH_SIZE)
+
         write_dl_to_file(orig_data["train"], tmp_train_path, data_builder.tokenizer)
         write_dl_to_file(orig_data["test"], tmp_test_path, data_builder.tokenizer)
+        write_dl_to_file(
+            orig_data["ood_test"], tmp_ood_test_path, data_builder.tokenizer
+        )
         original_train_ppl = get_srilm_perplexity(tmp_train_path, tmp_train_path)
         original_test_ppl = get_srilm_perplexity(tmp_train_path, tmp_test_path)
+        original_ood_test_ppl = get_srilm_perplexity(tmp_train_path, tmp_ood_test_path)
 
         # Clean up
         os.remove(tmp_train_path)
         os.remove(tmp_test_path)
+        os.remove(tmp_ood_test_path)
         del orig_data
 
         ppls = defaultdict(list)
@@ -160,7 +162,8 @@ if __name__ == "__main__":
 
         with open(f"{RESULTS_DIR}/{dataset_name}_results.txt", "w") as results_file:
             results_file.write(
-                f"Original PPL: Train {original_train_ppl:.4f} / Test {original_test_ppl:.4f}\n"
+                f"Original PPL: Train {original_train_ppl:.4f} / Test {original_test_ppl:.4f} / "
+                f"OOD Test {original_ood_test_ppl:.4f}\n"
             )
 
             for target_size, ppls in ppls.items():

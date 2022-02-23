@@ -1,0 +1,39 @@
+program: hyperparameter_search.py
+method: random
+metric:
+  name: Epoch val score
+  goal: minimize
+parameters:
+  # Script parameters
+  dataset:
+    value: "danplus"
+  model:
+    value: "bayesian_lstm"
+  seed:
+    value: 1234
+  device:
+    value: "cuda"
+  # Actual hyperparameter search params
+  prior_sigma_1:
+    distribution: log_uniform
+    min: -0.8
+    max: 0.1
+  prior_sigma_2:
+    distribution: log_uniform
+    min: -0.8
+    max: 0.1
+  posterior_mu_init:
+    min: -0.6
+    max: 0.6
+  posterior_rho_init:
+    min: -8
+    max: -2
+early_terminate:
+  type: hyperband
+  min_iter: 4
+command:
+  - python3
+  - ${program}
+  - "--knock"
+  - "--track-emissions"
+  - ${args}
