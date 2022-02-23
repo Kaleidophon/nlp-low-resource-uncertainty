@@ -1,5 +1,5 @@
 """
-Define all training and model parameters used for the Dan+ dataset.
+Define all training and model parameters used for the English Wikipedia dataset.
 """
 
 # EXT
@@ -9,7 +9,7 @@ import torch.optim.lr_scheduler as scheduler
 import transformers
 
 
-DANPLUS_MODEL_PARAMS = {
+ENWIKI_MODEL_PARAMS = {
     "lstm": {
         "batch_size": 32,
         "sequence_length": 35,

@@ -1,0 +1,29 @@
+program: hyperparameter_search.py
+method: random
+metric:
+  name: Epoch val score
+  goal: minimize
+parameters:
+  # Script parameters
+  dataset:
+    value: "enwiki"
+  model:
+    value: "due_bert"
+  seed:
+    value: 1234
+  device:
+    value: "cuda"
+  # Actual hyperparameter search params
+  num_inducing_points:
+    values: [20, 40, 60, 80, 100, 150, 200]
+  kernel_type:
+    values: ["RF", "RQ", "Matern12", "Matern32", "Matern52"]
+early_terminate:
+  type: hyperband
+  min_iter: 8
+command:
+  - python3
+  - ${program}
+  - "--knock"
+  - "--track-emissions"
+  - ${args}

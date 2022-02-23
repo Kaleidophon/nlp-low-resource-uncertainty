@@ -27,7 +27,7 @@ from src.config import MODEL_PARAMS, DATASET_TASKS, AVAILABLE_DATASETS
 SEED = 123
 RESULT_DIR = "./results"
 MODEL_DIR = "./models"
-DATA_DIR = "./data/processed"
+DATA_DIR = "data/processed"
 EMISSION_DIR = "./emissions"
 PROJECT_NAME = "nlp-low-resource-uncertainty"
 
