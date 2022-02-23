@@ -3,6 +3,7 @@ from nlp_uncertainty_zoo.config import AVAILABLE_DATASETS, DATASET_TASKS
 
 # PROJECT
 from src.data import EnglishWikiBuilder, SwahiliWikiBuilder, FinnishUDBuilder
+from src.danplus_config import DANPLUS_MODEL_PARAMS
 
 # AVAILABLE DATASETS AND MODELS
 AVAILABLE_DATASETS = {
@@ -17,3 +18,5 @@ DATASET_TASKS = {
     "swwiki": "language_modelling",
     "finnish_ud": "token_classification",
 }
+
+MODEL_PARAMS = {"dan+": DANPLUS_MODEL_PARAMS}

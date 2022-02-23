@@ -16,16 +16,12 @@ from knockknock import telegram_sender
 import numpy as np
 import torch
 import wandb
+from nlp_uncertainty_zoo.utils.task_eval import evaluate
+from nlp_uncertainty_zoo.config import AVAILABLE_MODELS
+from nlp_uncertainty_zoo.utils.custom_types import Device, WandBRun
 
 # PROJECT
-from nlp_uncertainty_zoo.utils.task_eval import evaluate
-from nlp_uncertainty_zoo.config import (
-    MODEL_PARAMS,
-    AVAILABLE_DATASETS,
-    AVAILABLE_MODELS,
-    DATASET_TASKS,
-)
-from nlp_uncertainty_zoo.utils.custom_types import Device, WandBRun
+from src.config import MODEL_PARAMS, DATASET_TASKS, AVAILABLE_DATASETS
 
 # CONST
 SEED = 123
@@ -33,7 +29,7 @@ RESULT_DIR = "./results"
 MODEL_DIR = "./models"
 DATA_DIR = "./data/processed"
 EMISSION_DIR = "./emissions"
-PROJECT_NAME = "nlp-uncertainty-zoo"
+PROJECT_NAME = "nlp-low-resource-uncertainty"
 
 # GLOBALS
 SECRET_IMPORTED = False

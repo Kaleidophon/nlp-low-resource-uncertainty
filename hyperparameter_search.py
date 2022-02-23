@@ -32,9 +32,6 @@ SECRET_IMPORTED = False
 PROJECT_NAME = "nlp-low-resource-uncertainty"
 
 
-# TODO: Add default model parameters
-
-
 try:
     from secret import TELEGRAM_API_TOKEN, TELEGRAM_CHAT_ID, COUNTRY_CODE
 
