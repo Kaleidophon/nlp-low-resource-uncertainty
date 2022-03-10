@@ -198,5 +198,10 @@ if __name__ == "__main__":
         )(perform_hyperparameter_search)
 
     perform_hyperparameter_search(
-        args.model, args.dataset, args.device, args.seed, wandb_run
+        model_name=args.model,
+        dataset_name=args.dataset,
+        data_dir=args.data_dir,
+        device=args.device,
+        seed=args.seed,
+        wandb_run=wandb_run,
     )
