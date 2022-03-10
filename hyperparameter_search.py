@@ -97,7 +97,6 @@ def perform_hyperparameter_search(
         module.fit(
             train_split=data_splits["train"],
             valid_split=data_splits["valid"],
-            validate=True,
             verbose=False,
             wandb_run=wandb,
         )
