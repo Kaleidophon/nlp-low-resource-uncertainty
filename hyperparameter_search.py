@@ -111,15 +111,19 @@ def perform_hyperparameter_search(
         score = -np.inf
 
     info_dict["score"] = score
-    wandb.log({"score": score})
+
+    if wandb_run is not None:
+        wandb_run.log({"score": score})
+        info_dict["url"] = wandb.run.get_url()
 
     if tracker is not None:
         tracker.stop()
         emissions = tracker._prepare_emissions_data().emissions
         info_dict["emissions"] = emissions
-        wandb.log({"emissions": emissions})
 
-    info_dict["url"] = wandb.run.get_url()
+        if wandb_run is not None:
+            wandb_run.log({"emissions": emissions})
+
     return "\n" + json.dumps(info_dict, indent=4)
 
 

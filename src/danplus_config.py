@@ -31,7 +31,7 @@ DANPLUS_MODEL_PARAMS = {
         "hidden_size": 650,
         "input_size": 650,
         "dropout": 0.5,
-        "vocab_size": 119547,
+        "vocab_size": 52000,
         "output_size": 20,
         "is_sequence_classifier": False,
     },
@@ -56,7 +56,7 @@ DANPLUS_MODEL_PARAMS = {
         "hidden_size": 650,
         "input_size": 650,
         "dropout": 0.5,
-        "vocab_size": 119547,
+        "vocab_size": 52000,
         "output_size": 20,
         "ensemble_size": 10,
         "is_sequence_classifier": False,
@@ -81,7 +81,7 @@ DANPLUS_MODEL_PARAMS = {
         "hidden_size": 650,
         "input_size": 650,
         "dropout": 0.5,
-        "vocab_size": 119547,
+        "vocab_size": 52000,
         "output_size": 20,
         "prior_sigma_1": 0.1,
         "prior_sigma_2": 0.002,
@@ -111,7 +111,7 @@ DANPLUS_MODEL_PARAMS = {
         "hidden_size": 650,
         "input_size": 650,
         "dropout": 0.5,
-        "vocab_size": 119547,
+        "vocab_size": 52000,
         "output_size": 20,
         "num_predictions": 10,
         "num_centroids": 20,
@@ -140,7 +140,7 @@ DANPLUS_MODEL_PARAMS = {
         "embedding_dropout": 0.3,  # dropout_x, Large model Gal & Ghrahramani (2016)
         "layer_dropout": 0.5,  # dropout_i / dropout_o, Large model Gal & Ghrahramani (2016)
         "time_dropout": 0.3,  # dropout_h, Large model Gal & Ghrahramani (2016)
-        "vocab_size": 119547,
+        "vocab_size": 52000,
         "output_size": 20,
         "num_predictions": 10,  # Changed from 1000 because that's just excessive
     },
