@@ -98,7 +98,7 @@ def perform_hyperparameter_search(
             train_split=data_splits["train"],
             valid_split=data_splits["valid"],
             verbose=False,
-            wandb_run=wandb,
+            wandb_run=wandb_run,
         )
         score = -module.eval(data_splits["eval"].to(device)).item()
 
