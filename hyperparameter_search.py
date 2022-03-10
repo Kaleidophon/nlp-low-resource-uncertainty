@@ -143,6 +143,7 @@ if __name__ == "__main__":
     parser.add_argument("--track-emissions", action="store_true", default=False)
     parser.add_argument("--emission-dir", type=str, default=EMISSION_DIR)
     parser.add_argument("--knock", action="store_true", default=False)
+    parser.add_argument("--wandb", action="store_true", default=False)
     parser.add_argument("--seed", type=int, default=SEED)
 
     # Parse into the arguments specified above, everything else are ran parameters
@@ -171,8 +172,11 @@ if __name__ == "__main__":
     model_params = MODEL_PARAMS[args.dataset][args.model]
     model_params.update(config)
 
-    wandb_run = wandb.init(project=PROJECT_NAME, config=model_params)
     tracker = None
+    wandb_run = None
+
+    if args.wandb:
+        wandb_run = wandb.init(project=PROJECT_NAME, config=model_params)
 
     if args.track_emissions:
         timestamp = str(datetime.now().strftime("%d-%m-%Y (%H:%M:%S)"))
