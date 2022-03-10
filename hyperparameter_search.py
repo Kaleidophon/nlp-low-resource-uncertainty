@@ -48,6 +48,7 @@ def perform_hyperparameter_search(
     dataset_name: str,
     data_dir: str,
     device: Device = "cpu",
+    verbose: bool = False,
     seed: Optional[int] = None,
     wandb_run: Optional[WandBRun] = None,
 ) -> str:
@@ -64,6 +65,8 @@ def perform_hyperparameter_search(
         Directory the data is stored in.
     device: Device
         Device hyperparameter search happens on.
+    verbose: bool
+        Flag to determine whether training progress should be printed. Defaults to False.
     seed: Optional[int]
         Seed for the hyperparameter run.
     wandb_run: Optional[WandBRun]
@@ -91,13 +94,15 @@ def perform_hyperparameter_search(
     dataset_builder = AVAILABLE_DATASETS[dataset_name](
         data_dir=data_dir, max_length=model_params["sequence_length"]
     )
-    data_splits = dataset_builder.build(batch_size=model_params["batch_size"])
+    data_splits = dataset_builder.build(
+        batch_size=model_params["batch_size"], drop_last=True
+    )
 
     try:
         module.fit(
             train_split=data_splits["train"],
             valid_split=data_splits["valid"],
-            verbose=False,
+            verbose=verbose,
             wandb_run=wandb_run,
         )
         score = -module.eval(data_splits["eval"].to(device)).item()
@@ -148,6 +153,7 @@ if __name__ == "__main__":
     parser.add_argument("--emission-dir", type=str, default=EMISSION_DIR)
     parser.add_argument("--knock", action="store_true", default=False)
     parser.add_argument("--wandb", action="store_true", default=False)
+    parser.add_argument("--verbose", action="store_true", default=False)
     parser.add_argument("--seed", type=int, default=SEED)
 
     # Parse into the arguments specified above, everything else are ran parameters
@@ -209,6 +215,7 @@ if __name__ == "__main__":
         dataset_name=args.dataset,
         data_dir=args.data_dir,
         device=args.device,
+        verbose=args.verbose,
         seed=args.seed,
         wandb_run=wandb_run,
     )
