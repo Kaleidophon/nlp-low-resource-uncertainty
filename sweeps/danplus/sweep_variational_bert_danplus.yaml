@@ -13,6 +13,9 @@ parameters:
     value: 1234
   device:
     value: "cuda"
+  num_epochs:
+    distribution: constant
+    value: 30
   # Actual hyperparameter search params
   weight_decay:
     min: 0.0

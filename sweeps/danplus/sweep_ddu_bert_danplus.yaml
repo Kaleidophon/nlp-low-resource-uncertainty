@@ -13,6 +13,9 @@ parameters:
     value: 1234
   device:
     value: "cuda"
+  num_epochs:
+    distribution: constant
+    value: 30
   # Actual hyperparameter search params
   spectral_norm_upper_bound:
     min: 0.85
