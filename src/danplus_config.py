@@ -160,7 +160,7 @@ DANPLUS_MODEL_PARAMS = {
             "num_training_steps": 20,
         },
         "output_size": 20,
-        "is_sequence_classifier": True,
+        "is_sequence_classifier": False,
         "spectral_norm_upper_bound": 0.95,
     },
     "variational_bert": {
