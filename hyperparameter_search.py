@@ -191,7 +191,7 @@ if __name__ == "__main__":
     if args.track_emissions:
         timestamp = str(datetime.now().strftime("%d-%m-%Y (%H:%M:%S)"))
         emissions_path = os.path.join(args.emission_dir, timestamp)
-        os.mkdir(emissions_path)
+        os.makedirs(emissions_path)
         tracker = OfflineEmissionsTracker(
             project_name="nlp_uncertainty_zoo-hyperparameters",
             country_iso_code=COUNTRY_CODE,
