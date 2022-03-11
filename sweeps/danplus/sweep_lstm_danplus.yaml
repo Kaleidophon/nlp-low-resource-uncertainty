@@ -32,10 +32,11 @@ parameters:
     values: [350, 500, 650]
 early_terminate:
   type: hyperband
-  min_iter: 8
+  min_iter: 300
 command:
   - python3
   - ${program}
   - "--knock"
   - "--track-emissions"
+  - "--wandb"
   - ${args}

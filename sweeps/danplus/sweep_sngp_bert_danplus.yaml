@@ -31,4 +31,5 @@ command:
   - ${program}
   - "--knock"
   - "--track-emissions"
+  - "--wandb"
   - ${args}
