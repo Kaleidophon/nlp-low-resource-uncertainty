@@ -105,7 +105,7 @@ def perform_hyperparameter_search(
             verbose=verbose,
             wandb_run=wandb_run,
         )
-        score = -module.eval(data_splits["eval"].to(device)).item()
+        score = -module.eval(data_splits["valid"].to(device)).item()
 
     # In case of nans due bad training parameters
     except (ValueError, RuntimeError) as e:
