@@ -6,7 +6,7 @@ metric:
 parameters:
   # Script parameters
   dataset:
-    value: "danplus"
+    value: "dan+"
   model:
     value: "ddu_bert"
   seed:

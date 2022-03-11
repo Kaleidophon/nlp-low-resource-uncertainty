@@ -6,9 +6,9 @@ metric:
 parameters:
   # Script parameters
   dataset:
-    value: "ptb"
+    value: "dan+"
   model:
-    value: "lstm"
+    value: "variational_bert"
   seed:
     value: 1234
   device:
