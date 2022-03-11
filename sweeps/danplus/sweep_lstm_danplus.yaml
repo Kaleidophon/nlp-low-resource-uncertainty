@@ -32,8 +32,8 @@ parameters:
     values: [350, 500, 650]
 early_terminate:
   type: hyperband
-  min_iter: 300
-  max_iter: 600
+  min_iter: 4
+  max_iter: 6
 command:
   - python3
   - ${program}
