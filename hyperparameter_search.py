@@ -105,20 +105,12 @@ def perform_hyperparameter_search(
             verbose=verbose,
             wandb_run=wandb_run,
         )
-        score = -module.eval(data_splits["valid"].to(device)).item()
 
     # In case of nans due bad training parameters
     except (ValueError, RuntimeError) as e:
         print(f"There was an error: '{str(e)}', run aborted.")
-        score = -np.inf
-
-    if np.isnan(score):
-        score = -np.inf
-
-    info_dict["score"] = score
 
     if wandb_run is not None:
-        wandb_run.log({"score": score})
         info_dict["url"] = wandb.run.get_url()
 
     if tracker is not None:
