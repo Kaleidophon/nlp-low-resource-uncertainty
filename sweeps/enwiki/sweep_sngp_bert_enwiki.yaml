@@ -1,7 +1,7 @@
 program: hyperparameter_search.py
 method: random
 metric:
-  name: Epoch val score
+  name: epoch_val_score
   goal: minimize
 parameters:
   # Script parameters
