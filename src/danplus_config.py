@@ -143,6 +143,7 @@ DANPLUS_MODEL_PARAMS = {
         "vocab_size": 52000,
         "output_size": 20,
         "num_predictions": 10,  # Changed from 1000 because that's just excessive
+        "is_sequence_classifier": False,
     },
     "ddu_bert": {
         "bert_name": "alexanderfalk/danbert-small-cased",
