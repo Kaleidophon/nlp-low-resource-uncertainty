@@ -26,7 +26,7 @@ parameters:
   init_weight:
     min: 0.1
     max: 0.6
-  num_layer:
+  num_layers:
     values: [2, 3]
   dropout:
     min: 0.1
