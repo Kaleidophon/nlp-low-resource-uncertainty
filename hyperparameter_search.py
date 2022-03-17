@@ -12,7 +12,6 @@ from typing import Optional, List
 # EXT
 from codecarbon import OfflineEmissionsTracker
 from knockknock import telegram_sender
-import numpy as np
 import torch
 import wandb
 
