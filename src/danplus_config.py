@@ -138,8 +138,8 @@ DANPLUS_MODEL_PARAMS = {
         "hidden_size": 350,
         "input_size": 650,
         "embedding_dropout": 0.3,  # dropout_x, Large model Gal & Ghrahramani (2016)
-        "layer_dropout": 0.5,  # dropout_i / dropout_o, Large model Gal & Ghrahramani (2016)
-        "time_dropout": 0.3,  # dropout_h, Large model Gal & Ghrahramani (2016)
+        "layer_dropout": 0.2645,  # dropout_i / dropout_o, Large model Gal & Ghrahramani (2016)
+        "time_dropout": 0.2923,  # dropout_h, Large model Gal & Ghrahramani (2016)
         "vocab_size": 52000,
         "output_size": 20,
         "num_predictions": 10,  # Changed from 1000 because that's just excessive
