@@ -22,7 +22,7 @@ parameters:
   kernel_type:
     values: ["RF", "RQ", "Matern12", "Matern32", "Matern52"]
   lr:
-    min: 0.001,
+    min: 0.001
     max: 0.1
 early_terminate:
   type: hyperband

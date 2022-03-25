@@ -78,7 +78,7 @@ DANPLUS_MODEL_PARAMS = {
             "milestones": torch.LongTensor(range(13, 54, 1)),
         },
         "num_layers": 2,
-        "hidden_size": 350,
+        "hidden_size": 650,
         "input_size": 650,
         "dropout": 0.275,
         "vocab_size": 52000,
