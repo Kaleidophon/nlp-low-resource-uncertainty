@@ -26,6 +26,9 @@ parameters:
   gp_mean_field_factor:
     min: 0.05
     max: 0.4
+  lr:
+    min: 0.001,
+    max: 0.1
 early_terminate:
   type: hyperband
   min_iter: 8
