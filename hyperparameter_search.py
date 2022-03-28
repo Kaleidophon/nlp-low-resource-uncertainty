@@ -17,10 +17,7 @@ import wandb
 
 # PROJECT
 from nlp_uncertainty_zoo.config import AVAILABLE_MODELS
-from src.config import (
-    AVAILABLE_DATASETS,
-    MODEL_PARAMS,
-)
+from src.config import AVAILABLE_DATASETS, MODEL_PARAMS, DATASET_SAMPLE_CONFIGS
 from nlp_uncertainty_zoo.utils.custom_types import Device, WandBRun
 
 # CONST
@@ -88,10 +85,14 @@ def perform_hyperparameter_search(
     model_params = MODEL_PARAMS[dataset_name][model_name]
 
     module = AVAILABLE_MODELS[model_name](model_params, device=device)
+    sample_configs = DATASET_SAMPLE_CONFIGS[dataset_name]
 
     # Read data and build data splits
     dataset_builder = AVAILABLE_DATASETS[dataset_name](
-        data_dir=data_dir, max_length=model_params["sequence_length"]
+        data_dir=data_dir,
+        max_length=model_params["sequence_length"],
+        sampler_class=sample_configs[0].sampler_class,
+        sampler_kwargs=sample_configs[0].sampler_kwargs,
     )
     data_splits = dataset_builder.build(
         batch_size=model_params["batch_size"], drop_last=True
