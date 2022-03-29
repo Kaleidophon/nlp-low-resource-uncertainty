@@ -59,6 +59,20 @@ DATASET_SAMPLE_CONFIGS = {
         )
         for train_size in [4000, 2000, 1000, 500]
     ],
+    "finnish_ud": [
+        SamplerConfig(
+            sampler_class=TokenClassificationSampler,
+            sampler_kwargs={
+                "train": {
+                    "target_size": train_size,
+                    "num_jobs": 4,
+                }
+                if train_size is not None
+                else None,
+            },
+        )
+        for train_size in [4000, 2000, 1000, 500]
+    ],
 }
 
 MODEL_PARAMS = {"dan+": DANPLUS_MODEL_PARAMS, "enwiki": ENWIKI_MODEL_PARAMS}
