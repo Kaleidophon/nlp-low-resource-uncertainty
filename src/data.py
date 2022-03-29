@@ -42,7 +42,7 @@ class FinnishUDBuilder(ClassificationDatasetBuilder):
             },
             type_="token_classification",
             tokenizer=BertTokenizerFast.from_pretrained(
-                "alexanderfalk/danbert-small-cased"
+                "TurkuNLP/bert-base-finnish-cased-v1"
             ),
             max_length=max_length,
             sampler_class=sampler_class,

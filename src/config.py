@@ -12,6 +12,7 @@ from nlp_uncertainty_zoo.config import AVAILABLE_DATASETS, DATASET_TASKS
 from src.data import EnglishWikiBuilder, SwahiliWikiBuilder, FinnishUDBuilder
 from src.danplus_config import DANPLUS_MODEL_PARAMS
 from src.enwiki_config import ENWIKI_MODEL_PARAMS
+from src.finnish_ud_config import FINNISH_UD_MODEL_PARAMS
 
 # CONST
 SamplerConfig = namedtuple("SamplerConfig", ["sampler_class", "sampler_kwargs"])
@@ -75,4 +76,8 @@ DATASET_SAMPLE_CONFIGS = {
     ],
 }
 
-MODEL_PARAMS = {"dan+": DANPLUS_MODEL_PARAMS, "enwiki": ENWIKI_MODEL_PARAMS}
+MODEL_PARAMS = {
+    "dan+": DANPLUS_MODEL_PARAMS,
+    "enwiki": ENWIKI_MODEL_PARAMS,
+    "finnish_ud": FINNISH_UD_MODEL_PARAMS,
+}
