@@ -82,10 +82,8 @@ def perform_hyperparameter_search(
     if wandb_run is not None:
         info_dict["config"] = wandb_run.config.as_dict()
 
-    model_params = MODEL_PARAMS[dataset_name][model_name]
-
-    module = AVAILABLE_MODELS[model_name](model_params, device=device)
     sample_configs = DATASET_SAMPLE_CONFIGS[dataset_name]
+    model_params = MODEL_PARAMS[dataset_name][model_name]
 
     # Read data and build data splits
     dataset_builder = AVAILABLE_DATASETS[dataset_name](
@@ -97,6 +95,9 @@ def perform_hyperparameter_search(
     data_splits = dataset_builder.build(
         batch_size=model_params["batch_size"], drop_last=True
     )
+    del dataset_builder  # Free up memory before loading large models
+
+    module = AVAILABLE_MODELS[model_name](model_params, device=device)
 
     try:
         module.fit(
