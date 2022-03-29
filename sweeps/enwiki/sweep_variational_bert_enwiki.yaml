@@ -8,7 +8,7 @@ parameters:
   dataset:
     value: "enwiki"
   model:
-    value: "lstm"
+    value: "variational_bert"
   seed:
     value: 1234
   device:
