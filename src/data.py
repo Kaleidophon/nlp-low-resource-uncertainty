@@ -105,7 +105,7 @@ class EnglishWikiBuilder(LanguageModellingDatasetBuilder):
                 "ood_test": f"{data_dir}/enwiki/ood_test.txt",
             },
             type_="next_token_prediction",
-            tokenizer=BertTokenizer.from_pretrained("bert-base-multilingual-cased"),
+            tokenizer=BertTokenizer.from_pretrained("bert-base-cased"),
             max_length=max_length,
             sampler_class=sampler_class,
             sampler_kwargs=sampler_kwargs,

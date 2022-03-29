@@ -171,6 +171,7 @@ DANPLUS_MODEL_PARAMS = {
         "lr": 0.05,
         "num_epochs": 20,
         "grad_clip": 10,
+        "dropout": 0.2,
         "optimizer_class": optim.Adam,
         "scheduler_class": transformers.get_linear_schedule_with_warmup,
         "scheduler_step_or_epoch": "epoch",
