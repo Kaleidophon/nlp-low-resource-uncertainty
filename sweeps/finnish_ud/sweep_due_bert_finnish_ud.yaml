@@ -1,0 +1,38 @@
+program: hyperparameter_search.py
+method: random
+metric:
+  name: epoch_val_loss
+  goal: minimize
+parameters:
+  # Script parameters
+  dataset:
+    value: "finnish_ud"
+  model:
+    value: "due_bert"
+  seed:
+    value: 1234
+  device:
+    value: "cuda"
+  num_epochs:
+    distribution: constant
+    value: 30
+  # Actual hyperparameter search params
+  num_inducing_points:
+    values: [20, 40, 60, 80, 100, 150, 200]
+  num_inducing_samples:
+    values: [1000, 5000, 10000, 15000, 20000]
+  kernel_type:
+    values: ["RF", "RQ", "Matern12", "Matern32", "Matern52"]
+  lr:
+    min: 0.001
+    max: 0.1
+early_terminate:
+  type: hyperband
+  min_iter: 8
+command:
+  - python3
+  - ${program}
+  - "--knock"
+  - "--track-emissions"
+  - "--wandb"
+  - ${args}
