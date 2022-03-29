@@ -57,7 +57,7 @@ DATASET_SAMPLE_CONFIGS = {
                 },
             },
         )
-        for train_size in [10000, 4000, 2000, 1000, 500]
+        for train_size in [4000, 2000, 1000, 500]
     ],
 }
 
