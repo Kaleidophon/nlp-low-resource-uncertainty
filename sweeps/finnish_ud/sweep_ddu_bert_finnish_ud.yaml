@@ -20,6 +20,9 @@ parameters:
   spectral_norm_upper_bound:
     min: 0.85
     max: 0.99
+  lr:
+    min: 0.001
+    max: 0.1
 early_terminate:
   type: hyperband
   min_iter: 8
