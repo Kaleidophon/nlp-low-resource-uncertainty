@@ -223,7 +223,7 @@ FINNISH_UD_MODEL_PARAMS = {
         },
         "output_size": 16,
         "last_layer_size": 768,
-        "spectral_norm_upper_bound": 0.99,
+        "spectral_norm_upper_bound": 0.96,
         "ridge_factor": 0.001,
         "scaling_coefficient": 0.999,
         "beta_length_scale": 2,
