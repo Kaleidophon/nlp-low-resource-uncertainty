@@ -162,6 +162,7 @@ FINNISH_UD_MODEL_PARAMS = {
         },
         "output_size": 16,
         "is_sequence_classifier": False,
+        "projection_size": None,
         "spectral_norm_upper_bound": 0.99,
     },
     "variational_bert": {

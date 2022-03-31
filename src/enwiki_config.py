@@ -161,6 +161,7 @@ ENWIKI_MODEL_PARAMS = {
             "num_training_steps": 20,
         },
         "output_size": 28996,
+        "projection_size": None,
         "is_sequence_classifier": True,
         "spectral_norm_upper_bound": 0.95,
     },
