@@ -13,12 +13,12 @@ CLINC_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0,
+        "weight_decay": 0.001337,
         "lr": 1,
         "num_epochs": 60,  # Changed from 55 in original
         # "early_stopping_pat": 10,
         "grad_clip": 10,
-        "init_weight": 0.04,  # Hacky way to include this for replication, this prob. won't be used anywhere else
+        "init_weight": 0.283,  # Hacky way to include this for replication, this prob. won't be used anywhere else
         "optimizer_class": optim.SGD,
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_step_or_epoch": "epoch",
@@ -29,7 +29,7 @@ CLINC_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 650,
         "input_size": 650,
-        "dropout": 0.5,
+        "dropout": 0.3379,
         "vocab_size": 30522,
         "output_size": 151,
         "is_sequence_classifier": True,
@@ -38,12 +38,12 @@ CLINC_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0,
+        "weight_decay": 0.001337,
         "lr": 1,
         "num_epochs": 60,  # Changed from 55 in original
         # "early_stopping_pat": 10,
         "grad_clip": 10,
-        "init_weight": 0.04,  # Hacky way to include this for replication, this prob. won't be used anywhere else
+        "init_weight": 0.283,  # Hacky way to include this for replication, this prob. won't be used anywhere else
         "optimizer_class": optim.SGD,
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_step_or_epoch": "epoch",
@@ -54,7 +54,7 @@ CLINC_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 650,
         "input_size": 650,
-        "dropout": 0.5,
+        "dropout": 0.3379,
         "vocab_size": 30522,
         "output_size": 151,
         "ensemble_size": 10,
@@ -64,7 +64,7 @@ CLINC_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0,
+        "weight_decay": 0.001337,
         "lr": 1,
         "num_epochs": 60,  # Changed from 55 in original
         # "early_stopping_pat": 10,
@@ -79,7 +79,7 @@ CLINC_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 650,
         "input_size": 650,
-        "dropout": 0.5,
+        "dropout": 0.3379,
         "vocab_size": 30522,
         "output_size": 151,
         "prior_sigma_1": 0.1,
@@ -94,7 +94,7 @@ CLINC_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0,
+        "weight_decay": 0.001337,
         "lr": 1,
         "num_epochs": 60,  # Changed from 55 in original
         # "early_stopping_pat": 10,
@@ -109,7 +109,7 @@ CLINC_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 650,
         "input_size": 650,
-        "dropout": 0.5,
+        "dropout": 0.3379,
         "vocab_size": 30522,
         "output_size": 151,
         "num_predictions": 10,
@@ -121,12 +121,12 @@ CLINC_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 1e-7,
+        "weight_decay": 0.001337,
         "lr": 1,
         "num_epochs": 60,
         # "early_stopping_pat": 10,
         "grad_clip": 10,
-        "init_weight": 0.04,  # Hacky way to include this for replication, this prob. won't be used anywhere else
+        "init_weight": 0.283,  # Hacky way to include this for replication, this prob. won't be used anywhere else
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_step_or_epoch": "epoch",
         "scheduler_kwargs": {
@@ -179,7 +179,7 @@ CLINC_MODEL_PARAMS = {
             "num_training_steps": 20,
         },
         "output_size": 151,
-        "last_layer_size": 512,
+        "last_layer_size": 256,
         "spectral_norm_upper_bound": 0.95,
         "ridge_factor": 0.001,
         "scaling_coefficient": 0.999,
