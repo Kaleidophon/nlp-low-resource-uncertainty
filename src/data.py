@@ -111,3 +111,34 @@ class EnglishWikiBuilder(LanguageModellingDatasetBuilder):
             sampler_kwargs=sampler_kwargs,
             num_jobs=num_jobs,
         )
+
+
+class ClincPlusBuilder(ClassificationDatasetBuilder):
+    """
+    Dataset class for the CLINC Plus OOS dataset.
+    """
+
+    def __init__(
+        self,
+        data_dir: str,
+        max_length: int,
+        sampler_class: Optional[Type] = None,
+        sampler_kwargs: Optional[SamplerKwargs] = None,
+        num_jobs: Optional[int] = 1,
+    ):
+        super().__init__(
+            name="clinc",
+            data_dir=data_dir,
+            splits={
+                "train": f"{data_dir}/clinc_plus/train.csv",
+                "valid": f"{data_dir}/clinc_plus/val.csv",
+                "test": f"{data_dir}/clinc_plus/test.csv",
+                "ood_test": f"{data_dir}/clinc_plus/oos_test.csv",
+            },
+            type_="sequence_classification",
+            tokenizer=BertTokenizer.from_pretrained("bert-base-uncased"),
+            max_length=max_length,
+            sampler_class=sampler_class,
+            sampler_kwargs=sampler_kwargs,
+            num_jobs=num_jobs,
+        )
