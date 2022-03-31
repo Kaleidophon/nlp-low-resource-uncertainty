@@ -1,0 +1,38 @@
+program: hyperparameter_search.py
+method: random
+metric:
+  name: epoch_val_loss
+  goal: minimize
+parameters:
+  # Script parameters
+  dataset:
+    value: "clinc_plus"
+  model:
+    value: "sngp_bert"
+  seed:
+    value: 1234
+  device:
+    value: "cuda"
+  # Actual hyperparameter search params
+  ridge_factor:
+    min: 0.001
+    max: 0.005
+  beta_length_scale:
+    min: 0.5
+    max: 2.5
+  gp_mean_field_factor:
+    min: 0.05
+    max: 0.4
+  lr:
+    min: 0.001
+    max: 0.1
+early_terminate:
+  type: hyperband
+  min_iter: 4
+command:
+  - python3
+  - ${program}
+  - "--knock"
+  - "--track-emissions"
+  - "--wandb"
+  - ${args}
