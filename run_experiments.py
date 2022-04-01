@@ -49,7 +49,7 @@ if torch.cuda.is_available():
 
 
 def run_experiments(
-    model_names: List[str],
+    model_name: List[str],
     dataset_name: str,
     runs: int,
     seed: int,
@@ -65,7 +65,7 @@ def run_experiments(
 
     Parameters
     ----------
-    model_names: List[str]
+    model_name: List[str]
         Names of models that experiments should be run for.
     dataset_name: str
         Name of the dataset the model should be run on.
@@ -92,62 +92,65 @@ def run_experiments(
     """
     scores = defaultdict(list)
 
-    for model_name in model_names:
+    np.random.seed(seed)
+    torch.manual_seed(seed)
 
-        np.random.seed(seed)
-        torch.manual_seed(seed)
+    # Get model (hyper-)parameters
+    model_params = MODEL_PARAMS[dataset_name][model_name]
 
-        # Get model (hyper-)parameters
-        model_params = MODEL_PARAMS[dataset_name][model_name]
+    # Read data and build data splits
+    dataset_task = DATASET_TASKS[dataset_name]
+    dataset_builder = AVAILABLE_DATASETS[dataset_name](
+        data_dir=data_dir, max_length=model_params["sequence_length"]
+    )
+    data_splits = dataset_builder.build(batch_size=model_params["batch_size"])
 
-        # Read data and build data splits
-        dataset_task = DATASET_TASKS[dataset_name]
-        dataset_builder = AVAILABLE_DATASETS[dataset_name](
-            data_dir=data_dir, max_length=model_params["sequence_length"]
+    for run in range(runs):
+        timestamp = str(datetime.now().strftime("%d-%m-%Y_(%H:%M:%S)"))
+
+        model = AVAILABLE_MODELS[model_name](
+            model_params, model_dir=model_dir, device=device
         )
-        data_splits = dataset_builder.build(batch_size=model_params["batch_size"])
 
-        for run in range(runs):
-            timestamp = str(datetime.now().strftime("%d-%m-%Y_(%H:%M:%S)"))
+        # TODO: Track uncertainty estimates over training
+        result_dict = model.fit(
+            train_split=data_splits["train"],
+            valid_split=data_splits["valid"],
+            wandb_run=wandb_run,
+        )
 
-            model = AVAILABLE_MODELS[model_name](
-                model_params, model_dir=model_dir, device=device
-            )
+        # Evaluate task performance
+        model.module.eval()
+        score = evaluate(
+            model,
+            eval_split=data_splits["test"],
+            task=dataset_task,
+            tokenizer=dataset_builder.tokenizer,
+            predictions_path=f"{result_dir}/{model_name}_{run+1}_{timestamp}.csv",
+        )
+        scores["task"].append(score)
 
-            result_dict = model.fit(
-                train_split=data_splits["train"],
-                valid_split=data_splits["valid"],
-                wandb_run=wandb_run,
-            )
+        # Evaluate uncertainty experiments
+        # TODO: Get uncertainty estimates per token and save as .pkl .csv
+        # TODO: Implement Calibration
+        # TODO: Implement coverage
+        # TODO: Implement OOD AUROC / AUPR
+        # TODO: Implement Kendall's tau
 
-            # Evaluate
-            model.module.eval()
-            score = evaluate(
-                model,
-                eval_split=data_splits["test"],
-                task=dataset_task,
-                tokenizer=dataset_builder.tokenizer,
-                predictions_path=f"{result_dir}/{model_name}_{run+1}_{timestamp}.csv",
-            )
-            scores[model_name].append(score)
+    # TODO: Check knockknockbot and Wandb stats
+    # Add all info to Weights & Biases
+    if wandb_run is not None:
+        wandb_run.config = model_params
+        wandb_run.log(
+            {
+                "train_loss": result_dict["train_loss"],
+                "best_val_loss": result_dict["best_val_loss"],
+                "test_score": score,
+            }
+        )
 
-            # Add all info to Weights & Biases
-            if wandb_run is not None:
-                wandb_run.config = model_params
-                wandb_run.log(
-                    {
-                        "train_loss": result_dict["train_loss"],
-                        "best_val_loss": result_dict["best_val_loss"],
-                        "test_score": score,
-                    }
-                )
-
-                # Reset for potential next run
-                wandb_run.finish()
-                wandb_run = wandb.init(PROJECT_NAME)
-
-            # TODO: Perform experiments
-            # TODO: Save results
+        # Reset for potential next run
+        wandb_run.finish()
 
     return json.dumps(
         {
