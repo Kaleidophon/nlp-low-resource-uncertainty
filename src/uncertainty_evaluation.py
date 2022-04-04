@@ -100,14 +100,15 @@ def evaluate_uncertainty(
                         sentence_i + batch_i, "sentence"
                     ] = tokenizer.decode(input_ids[batch_i, :])
                     predictions_df.at[sentence_i + batch_i, "labels"] = (
-                        " ".join(str(label) for label in labels[batch_i].tolist())
+                        " ".join(str(label) for label in labels[batch_i].cpu().tolist())
                         if seq_len > 1
-                        else str(labels[batch_i].numpy())
+                        else str(labels[batch_i].cpu().numpy())
                     )
                     predictions_df.at[sentence_i + batch_i, "predictions"] = " ".join(
                         str(pred)
                         for pred in torch.argmax(predictions[batch_i], dim=-1)
                         .detach()
+                        .cpu()
                         .tolist()
                     )
 
@@ -129,12 +130,12 @@ def evaluate_uncertainty(
                 predictions = predictions[batch_mask]
                 labels = labels[batch_mask]
 
-            split_predictions.append(predictions.detach().numpy())
-            split_labels.append(labels.detach().numpy())
+            split_predictions.append(predictions.detach().cpu().numpy())
+            split_labels.append(labels.detach().cpu().numpy())
 
             # Compute uncertainty
             losses = loss_func(predictions, labels)
-            split_losses.append(losses.detach().numpy())
+            split_losses.append(losses.detach().cpu().numpy())
 
             for metric_name in model_uncertainty_metrics:
                 uncertainty = model.get_uncertainty(
@@ -145,7 +146,7 @@ def evaluate_uncertainty(
                     for batch_i in range(batch_size):
                         predictions_df.at[sentence_i + batch_i, metric_name] = " ".join(
                             f"{score:.4f}"
-                            for score in uncertainty[batch_i].detach().tolist()
+                            for score in uncertainty[batch_i].detach().cpu().tolist()
                         )
 
                 uncertainty = rearrange(uncertainty, "b l -> (b l)")
@@ -154,7 +155,7 @@ def evaluate_uncertainty(
                 if seq_len > 1:
                     uncertainty = uncertainty[batch_mask]
 
-                uncertainties[metric_name].append(uncertainty.detach().numpy())
+                uncertainties[metric_name].append(uncertainty.detach().cpu().numpy())
 
             sentence_i += batch_size
 
