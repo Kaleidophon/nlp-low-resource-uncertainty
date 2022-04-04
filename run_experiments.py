@@ -8,6 +8,7 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import os
+import pickle
 from typing import List, Dict, Optional
 
 # EXT
@@ -22,6 +23,7 @@ from nlp_uncertainty_zoo.utils.custom_types import Device, WandBRun
 
 # PROJECT
 from src.config import MODEL_PARAMS, DATASET_TASKS, AVAILABLE_DATASETS
+from src.uncertainty_evaluation import evaluate_uncertainty
 
 # CONST
 SEED = 123
@@ -95,6 +97,8 @@ def run_experiments(
     np.random.seed(seed)
     torch.manual_seed(seed)
 
+    timestamp = str(datetime.now().strftime("%d-%m-%Y_(%H:%M:%S)"))
+
     # Get model (hyper-)parameters
     model_params = MODEL_PARAMS[dataset_name][model_name]
 
@@ -103,49 +107,59 @@ def run_experiments(
     dataset_builder = AVAILABLE_DATASETS[dataset_name](
         data_dir=data_dir, max_length=model_params["sequence_length"]
     )
-    data_splits = dataset_builder.build(batch_size=model_params["batch_size"])
+    data_splits = dataset_builder.build(
+        batch_size=model_params["batch_size"], drop_last=True
+    )
 
     for run in range(runs):
-        timestamp = str(datetime.now().strftime("%d-%m-%Y_(%H:%M:%S)"))
 
         model = AVAILABLE_MODELS[model_name](
             model_params, model_dir=model_dir, device=device
         )
 
-        # TODO: Track uncertainty estimates over training
         result_dict = model.fit(
             train_split=data_splits["train"],
             valid_split=data_splits["valid"],
             wandb_run=wandb_run,
         )
+        scores["train_loss"].append(result_dict["train_loss"])
+        scores["best_val_loss"].append(result_dict["best_val_loss"])
 
         # Evaluate task performance
         model.module.eval()
-        score = evaluate(
-            model,
-            eval_split=data_splits["test"],
-            task=dataset_task,
-            tokenizer=dataset_builder.tokenizer,
-            predictions_path=f"{result_dir}/{model_name}_{run+1}_{timestamp}.csv",
+
+        scores["task"].append(
+            evaluate(
+                model,
+                eval_split=data_splits["test"],
+                task=dataset_task,
+                tokenizer=dataset_builder.tokenizer,
+            )
         )
-        scores["task"].append(score)
 
         # Evaluate uncertainty experiments
-        # TODO: Get uncertainty estimates per token and save as .pkl .csv
-        # TODO: Implement Calibration
-        # TODO: Implement coverage
-        # TODO: Implement OOD AUROC / AUPR
-        # TODO: Implement Kendall's tau
+        uncertainty_scores = evaluate_uncertainty(
+            model,
+            id_eval_split=data_splits["test"],
+            ood_eval_split=data_splits["ood_test"],
+            tokenizer=dataset_builder.tokenizer,
+            predictions_path=f"{result_dir}/{model_name}_{run + 1}_{timestamp}_uncertainty",
+        )
 
-    # TODO: Check knockknockbot and Wandb stats
+        for score_name, score in uncertainty_scores.items():
+            scores[score_name].append(score)
+
+    # Save all scores in pickle file
+    with open(f"{result_dir}/{model_name}_{timestamp}_scores.pkl", "wb") as scores_path:
+        pickle.dump(scores, scores_path)
+
     # Add all info to Weights & Biases
     if wandb_run is not None:
         wandb_run.config = model_params
         wandb_run.log(
             {
-                "train_loss": result_dict["train_loss"],
-                "best_val_loss": result_dict["best_val_loss"],
-                "test_score": score,
+                score_name: f"{np.mean(scores)} ±{np.std(scores):.2f}"
+                for score_name, scores in scores.items()
             }
         )
 
@@ -157,8 +171,8 @@ def run_experiments(
             "dataset": dataset_name,
             "runs": runs,
             "scores": {
-                model_name: f"{np.mean(model_scores):.2f} ±{np.std(model_scores):.2f}"
-                for model_name, model_scores in scores.items()
+                score_name: f"{np.mean(scores)} ±{np.std(scores):.2f}"
+                for score_name, scores in scores.items()
             },
             "url": wandb.run.get_url(),
         },
@@ -177,10 +191,9 @@ if __name__ == "__main__":
         help="Dataset to run experiments on.",
     )
     parser.add_argument(
-        "--models",
+        "--model",
         type=str,
         required=True,
-        nargs="+",
         choices=AVAILABLE_MODELS.keys(),
     )
     parser.add_argument("--data-dir", type=str, default=DATA_DIR)
@@ -192,17 +205,24 @@ if __name__ == "__main__":
     parser.add_argument("--runs", type=int, default=4)
     parser.add_argument("--seed", type=int, default=SEED)
     parser.add_argument("--knock", action="store_true", default=False)
+    parser.add_argument("--wandb", action="store_true", default=False)
     args = parser.parse_args()
 
-    wandb_run = wandb.init(project=PROJECT_NAME)
+    if not os.path.exists(args.result_dir):
+        os.mkdir(args.result_dir)
+
     tracker = None
+    wandb_run = None
+
+    if args.wandb:
+        wandb_run = wandb.init(project=PROJECT_NAME)
 
     if args.track_emissions:
         timestamp = str(datetime.now().strftime("%d-%m-%Y (%H:%M:%S)"))
         emissions_path = os.path.join(args.emission_dir, timestamp)
         os.mkdir(emissions_path)
         tracker = OfflineEmissionsTracker(
-            project_name="nlp_uncertainty_zoo-experiments",
+            project_name=PROJECT_NAME,
             country_iso_code=COUNTRY_CODE,
             output_dir=emissions_path,
         )
@@ -221,7 +241,7 @@ if __name__ == "__main__":
 
     try:
         run_experiments(
-            args.models,
+            args.model,
             args.dataset,
             args.runs,
             args.seed,
