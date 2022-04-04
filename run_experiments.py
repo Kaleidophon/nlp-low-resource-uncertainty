@@ -9,6 +9,7 @@ from datetime import datetime
 import json
 import os
 import pickle
+import types
 from typing import List, Dict, Optional
 
 # EXT
@@ -16,6 +17,8 @@ from codecarbon import OfflineEmissionsTracker
 from knockknock import telegram_sender
 import numpy as np
 import torch
+from torch.utils.data import DataLoader
+from transformers.tokenization_utils import PreTrainedTokenizerBase
 import wandb
 from nlp_uncertainty_zoo.utils.task_eval import evaluate
 from nlp_uncertainty_zoo.config import AVAILABLE_MODELS
@@ -48,6 +51,53 @@ except ImportError:
 # CUDA
 if torch.cuda.is_available():
     torch.backends.cudnn.benchmark = True
+
+
+def create_patched_eval(
+    iid_data_split: DataLoader,
+    ood_data_split: DataLoader,
+    tokenizer: PreTrainedTokenizerBase,
+):
+    """
+    Create a modified version of a model's eval function that also tracks uncertainty estimates on the validation
+    and OOD test set over time.
+
+    """
+
+    def eval_with_tracking_uncertainties(
+        self, data_split: DataLoader, wandb_run: Optional[WandBRun] = None
+    ) -> torch.Tensor:
+        """
+        Evaluate a data split.
+
+        Parameters
+        ----------
+        data_split: DataSplit
+            Data split the model should be evaluated on.
+        wandb_run: Optional[WandBRun]
+            Weights and Biases run to track training statistics. Training and validation loss (if applicable) are
+            tracked by default, everything else is defined in _epoch_iter() and _finetune() depending on the model.
+
+        Returns
+        -------
+        torch.Tensor
+            Loss on evaluation split.
+        """
+        self.module.eval()
+        loss = self._epoch_iter(0, data_split)
+
+        # Also track uncertainty performance and calibration over time
+        if wandb_run is not None:
+            scores = evaluate_uncertainty(
+                self, iid_data_split, ood_data_split, tokenizer
+            )
+            wandb_run.log(scores)
+
+        self.module.train()
+
+        return loss
+
+    return eval_with_tracking_uncertainties
 
 
 def run_experiments(
@@ -116,6 +166,16 @@ def run_experiments(
         model = AVAILABLE_MODELS[model_name](
             model_params, model_dir=model_dir, device=device
         )
+
+        # If WandB tracking is enables, patch the object's eval method with the one define at the top of this script
+        # that also tracks uncertainty properties over the course of the training
+        if wandb_run is not None:
+            patched_eval_func = create_patched_eval(
+                iid_data_split=data_splits["test"],
+                ood_data_split=data_splits["ood_test"],
+                tokenizer=dataset_builder.tokenizer,
+            )
+            model.eval = types.MethodType(patched_eval_func, model)
 
         result_dict = model.fit(
             train_split=data_splits["train"],
