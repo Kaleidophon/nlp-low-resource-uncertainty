@@ -162,6 +162,9 @@ def run_experiments(
 
     for run in range(runs):
 
+        if wandb_run is not None:
+            wandb_run.name = f"{dataset_name}_{model_name}_{run+1}"
+
         model = AVAILABLE_MODELS[model_name](
             model_params, model_dir=model_dir, device=device
         )
