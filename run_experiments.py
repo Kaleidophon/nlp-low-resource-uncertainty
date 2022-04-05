@@ -29,7 +29,7 @@ from src.config import MODEL_PARAMS, DATASET_TASKS, AVAILABLE_DATASETS
 from src.uncertainty_evaluation import evaluate_uncertainty
 
 # CONST
-SEED = 123
+SEED = 123456
 RESULT_DIR = "./results"
 MODEL_DIR = "./models"
 DATA_DIR = "data/processed"
@@ -209,22 +209,24 @@ def run_experiments(
         for score_name, score in uncertainty_scores.items():
             scores[score_name].append(score)
 
-    # Save all scores in pickle file
-    with open(f"{result_dir}/{model_name}_{timestamp}_scores.pkl", "wb") as scores_path:
-        pickle.dump(scores, scores_path)
+        # Save all scores in pickle file
+        with open(
+            f"{result_dir}/{model_name}_{timestamp}_scores.pkl", "wb"
+        ) as scores_path:
+            pickle.dump(scores, scores_path)
 
-    # Add all info to Weights & Biases
-    if wandb_run is not None:
-        wandb_run.config = model_params
-        wandb_run.log(
-            {
-                score_name: f"{np.mean(scores)} ±{np.std(scores):.2f}"
-                for score_name, scores in scores.items()
-            }
-        )
+        # Add all info to Weights & Biases
+        if wandb_run is not None:
+            wandb_run.config = model_params
+            wandb_run.log(
+                {
+                    score_name: f"{np.mean(scores)} ±{np.std(scores):.2f}"
+                    for score_name, scores in scores.items()
+                }
+            )
 
-        # Reset for potential next run
-        wandb_run.finish()
+            # Reset for potential next run
+            wandb_run.finish()
 
     return json.dumps(
         {
