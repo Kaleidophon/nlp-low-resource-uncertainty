@@ -25,7 +25,7 @@ from nlp_uncertainty_zoo.config import AVAILABLE_MODELS
 from nlp_uncertainty_zoo.utils.custom_types import Device, WandBRun
 
 # PROJECT
-from src.config import MODEL_PARAMS, DATASET_TASKS, AVAILABLE_DATASETS
+from src.config import MODEL_PARAMS, AVAILABLE_DATASETS
 from src.uncertainty_evaluation import evaluate_uncertainty
 
 # CONST
@@ -153,7 +153,6 @@ def run_experiments(
     model_params = MODEL_PARAMS[dataset_name][model_name]
 
     # Read data and build data splits
-    dataset_task = DATASET_TASKS[dataset_name]
     dataset_builder = AVAILABLE_DATASETS[dataset_name](
         data_dir=data_dir, max_length=model_params["sequence_length"]
     )
@@ -177,6 +176,8 @@ def run_experiments(
             )
             model.eval = types.MethodType(patched_eval_func, model)
 
+        # TODO: Debug
+        """
         result_dict = model.fit(
             train_split=data_splits["train"],
             valid_split=data_splits["valid"],
@@ -184,18 +185,19 @@ def run_experiments(
         )
         scores["train_loss"].append(result_dict["train_loss"])
         scores["best_val_loss"].append(result_dict["best_val_loss"])
+        """
 
         # Evaluate task performance
         model.module.eval()
 
-        scores["task"].append(
-            evaluate(
-                model,
-                eval_split=data_splits["test"],
-                task=dataset_task,
-                tokenizer=dataset_builder.tokenizer,
-            )
+        task_scores = evaluate(
+            model,
+            eval_split=data_splits["test"],
+            tokenizer=dataset_builder.tokenizer,
         )
+
+        for score_name, score in task_scores.items():
+            scores[score_name].append(score)
 
         # Evaluate uncertainty experiments
         uncertainty_scores = evaluate_uncertainty(
@@ -218,14 +220,16 @@ def run_experiments(
         # Add all info to Weights & Biases
         if wandb_run is not None and run < runs - 1:
             wandb_run.finish()
-            wandb_run = wandb.init(project=PROJECT_NAME)
+            wandb_run = wandb.init(
+                project=PROJECT_NAME, tags=[dataset_name, model_name]
+            )
 
     # # Reset for potential next run
     if wandb_run is not None:
         wandb_run.config.update(model_params)
         wandb_run.log(
             {
-                score_name: f"{np.mean(scores)} ±{np.std(scores):.2f}"
+                score_name: f"{np.mean(scores):.4f} ±{np.std(scores):.2f}"
                 for score_name, scores in scores.items()
             }
         )
@@ -235,7 +239,7 @@ def run_experiments(
             "dataset": dataset_name,
             "runs": runs,
             "scores": {
-                score_name: f"{np.mean(scores)} ±{np.std(scores):.2f}"
+                score_name: f"{np.mean(scores):.4f} ±{np.std(scores):.2f}"
                 for score_name, scores in scores.items()
             },
             "url": wandb.run.get_url(),
@@ -279,7 +283,7 @@ if __name__ == "__main__":
     wandb_run = None
 
     if args.wandb:
-        wandb_run = wandb.init(project=PROJECT_NAME)
+        wandb_run = wandb.init(project=PROJECT_NAME, tags=[args.dataset, args.model])
 
     if args.track_emissions:
         timestamp = str(datetime.now().strftime("%d-%m-%Y (%H:%M:%S)"))

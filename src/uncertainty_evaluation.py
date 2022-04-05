@@ -13,6 +13,7 @@ from nlp_uncertainty_zoo.utils.uncertainty_eval import (
     aupr,
     auroc,
     kendalls_tau,
+    ece,
     sce,
     ace,
     coverage_percentage,
@@ -164,6 +165,7 @@ def evaluate_uncertainty(
         split_losses = np.concatenate(split_losses, axis=0)
 
         # Compute calibration scores
+        scores[f"{split_name}_ece"] = ece(split_labels, split_predictions)
         scores[f"{split_name}_sce"] = sce(split_labels, split_predictions)
         scores[f"{split_name}_ace"] = ace(split_labels, split_predictions)
 
@@ -171,7 +173,7 @@ def evaluate_uncertainty(
         scores[f"{split_name}_coverage_percentage"] = coverage_percentage(
             split_labels, split_predictions
         )
-        scores[f"{split_name}_width"] = coverage_width(split_predictions)
+        scores[f"{split_name}_coverage_width"] = coverage_width(split_predictions)
 
         # Compute Kendall's tau scores
         for metric_name in model_uncertainty_metrics:
