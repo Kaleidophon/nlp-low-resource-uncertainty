@@ -216,17 +216,19 @@ def run_experiments(
             pickle.dump(scores, scores_path)
 
         # Add all info to Weights & Biases
-        if wandb_run is not None:
-            wandb_run.config = model_params
-            wandb_run.log(
-                {
-                    score_name: f"{np.mean(scores)} ±{np.std(scores):.2f}"
-                    for score_name, scores in scores.items()
-                }
-            )
-
-            # Reset for potential next run
+        if wandb_run is not None and run < runs - 1:
             wandb_run.finish()
+            wandb_run = wandb.init(project=PROJECT_NAME)
+
+    # # Reset for potential next run
+    if wandb_run is not None:
+        wandb_run.config.update(model_params)
+        wandb_run.log(
+            {
+                score_name: f"{np.mean(scores)} ±{np.std(scores):.2f}"
+                for score_name, scores in scores.items()
+            }
+        )
 
     return json.dumps(
         {
