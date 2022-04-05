@@ -164,6 +164,7 @@ def run_experiments(
 
         if wandb_run is not None:
             wandb_run.name = f"{dataset_name}_{model_name}_{run+1}"
+            wandb_run.config.update(model_params)
 
         model = AVAILABLE_MODELS[model_name](
             model_params, model_dir=model_dir, device=device
@@ -218,15 +219,17 @@ def run_experiments(
             pickle.dump(scores, scores_path)
 
         # Add all info to Weights & Biases
-        if wandb_run is not None and run < runs - 1:
-            wandb_run.finish()
-            wandb_run = wandb.init(
-                project=PROJECT_NAME, tags=[dataset_name, model_name]
-            )
+        if wandb_run is not None:
+            wandb_run.log(**task_scores, **uncertainty_scores)
+
+            if run < runs - 1:
+                wandb_run.finish()
+                wandb_run = wandb.init(
+                    project=PROJECT_NAME, tags=[dataset_name, model_name]
+                )
 
     # # Reset for potential next run
     if wandb_run is not None:
-        wandb_run.config.update(model_params)
         wandb_run.log(
             {
                 score_name: f"{np.mean(scores):.4f} ±{np.std(scores):.2f}"
