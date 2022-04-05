@@ -176,8 +176,6 @@ def run_experiments(
             )
             model.eval = types.MethodType(patched_eval_func, model)
 
-        # TODO: Debug
-        """
         result_dict = model.fit(
             train_split=data_splits["train"],
             valid_split=data_splits["valid"],
@@ -185,7 +183,6 @@ def run_experiments(
         )
         scores["train_loss"].append(result_dict["train_loss"])
         scores["best_val_loss"].append(result_dict["best_val_loss"])
-        """
 
         # Evaluate task performance
         model.module.eval()
