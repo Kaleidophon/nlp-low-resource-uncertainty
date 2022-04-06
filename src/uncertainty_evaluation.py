@@ -61,8 +61,8 @@ def evaluate_uncertainty(
         **model.module.multi_prediction_uncertainty_metrics,
     }
     scores = defaultdict(float)
-    id_uncertainties = defaultdict(list)
-    ood_uncertainties = defaultdict(list)
+    id_uncertainties, id_seq_uncertainties = defaultdict(list), defaultdict(list)
+    ood_uncertainties, ood_seq_uncertainties = defaultdict(list), defaultdict(list)
     loss_func = nn.CrossEntropyLoss(reduction="none", ignore_index=-100)
     columns = ["sentence", "labels", "predictions"] + list(
         model_uncertainty_metrics.keys()
@@ -70,9 +70,9 @@ def evaluate_uncertainty(
     predictions_df = pd.DataFrame(columns=columns)
     sentence_i = 0
 
-    for split_name, eval_split, uncertainties in [
-        ("id", id_eval_split, id_uncertainties),
-        ("ood", ood_eval_split, ood_uncertainties),
+    for split_name, eval_split, uncertainties, seq_uncertainties in [
+        ("id", id_eval_split, id_uncertainties, id_seq_uncertainties),
+        ("ood", ood_eval_split, ood_uncertainties, ood_seq_uncertainties),
     ]:
 
         split_predictions = []
@@ -150,11 +150,32 @@ def evaluate_uncertainty(
                             for score in uncertainty[batch_i].detach().cpu().tolist()
                         )
 
+                seq_uncertainty = torch.clone(uncertainty)
                 uncertainty = rearrange(uncertainty, "b l -> (b l)")
 
                 # Filter uncertainties for uninteresting tokens
                 if seq_len > 1:
                     uncertainty = uncertainty[batch_mask]
+
+                    # Get the sequence uncertainties setting non batch-mask tokens to zero and re-normalizing means
+                    # across second axis
+                    seq_batch_mask = rearrange(batch_mask, "(b s) -> b s", b=batch_size)
+                    seq_uncertainty *= (
+                        seq_batch_mask.int()
+                    )  # Mask out all uninteresting tokens' uncertainties
+                    seq_uncertainty = seq_uncertainty.mean(dim=1)
+                    seq_uncertainty *= seq_len
+                    seq_uncertainty /= seq_batch_mask.int().sum(dim=1)
+                    seq_uncertainties[metric_name].append(
+                        seq_uncertainty.detach().cpu().numpy()
+                    )
+
+                # Sequence classification tasks, sequence uncertainties are just the uncertainties of the single
+                # sequence-wide prediction
+                else:
+                    seq_uncertainties[metric_name].append(
+                        uncertainty.detach().cpu().numpy()
+                    )
 
                 uncertainties[metric_name].append(uncertainty.detach().cpu().numpy())
 
@@ -182,23 +203,28 @@ def evaluate_uncertainty(
                 split_losses, uncertainties[metric_name]
             )
 
+            # Already concatenate sequence uncertainties for later
+            seq_uncertainties[metric_name] = np.concatenate(
+                seq_uncertainties[metric_name]
+            )
+
         del split_losses, split_predictions, split_labels
 
     metric_key = list(model_uncertainty_metrics.keys())[0]
-    num_id = len(id_uncertainties[metric_key])
-    num_ood = len(ood_uncertainties[metric_key])
+    num_id = len(id_seq_uncertainties[metric_key])
+    num_ood = len(ood_seq_uncertainties[metric_key])
 
     for metric_name in model_uncertainty_metrics:
         scores[f"aupr_{metric_name}"] = aupr(
             [0] * num_id + [1] * num_ood,
             np.concatenate(
-                (id_uncertainties[metric_name], ood_uncertainties[metric_name])
+                (id_seq_uncertainties[metric_name], ood_seq_uncertainties[metric_name])
             ),
         )
         scores[f"auroc_{metric_name}"] = auroc(
             [0] * num_id + [1] * num_ood,
             np.concatenate(
-                (id_uncertainties[metric_name], ood_uncertainties[metric_name])
+                (id_seq_uncertainties[metric_name], ood_seq_uncertainties[metric_name])
             ),
         )
 
