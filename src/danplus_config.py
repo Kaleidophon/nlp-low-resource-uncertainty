@@ -14,7 +14,7 @@ DANPLUS_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0,
+        "weight_decay": 0.005159,
         "lr": 0.3031,
         "num_epochs": 60,  # Changed from 55 in original
         # "early_stopping_pat": 10,
@@ -39,7 +39,7 @@ DANPLUS_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0,
+        "weight_decay": 0.005159,
         "lr": 0.3031,
         "num_epochs": 60,  # Changed from 55 in original
         # "early_stopping_pat": 10,
@@ -83,11 +83,11 @@ DANPLUS_MODEL_PARAMS = {
         "dropout": 0.275,
         "vocab_size": 52000,
         "output_size": 20,
-        "prior_sigma_1": 0.1,
-        "prior_sigma_2": 0.002,
+        "prior_sigma_1": 0.5419,
+        "prior_sigma_2": 0.4657,
         "prior_pi": 1,
-        "posterior_mu_init": 0,
-        "posterior_rho_init": -6.0,
+        "posterior_mu_init": -0.3877,
+        "posterior_rho_init": -8.0,
         "num_predictions": 10,
         "is_sequence_classifier": False,
     },
@@ -95,8 +95,8 @@ DANPLUS_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0,
-        "lr": 0.3031,
+        "weight_decay": 0.004685,
+        "lr": 0.3036,
         "num_epochs": 60,  # Changed from 55 in original
         # "early_stopping_pat": 10,
         "grad_clip": 10,
@@ -110,7 +110,7 @@ DANPLUS_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 350,
         "input_size": 650,
-        "dropout": 0.275,
+        "dropout": 0.3812,
         "vocab_size": 52000,
         "output_size": 20,
         "num_predictions": 10,
@@ -137,9 +137,9 @@ DANPLUS_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 350,
         "input_size": 650,
-        "embedding_dropout": 0.3,  # dropout_x, Large model Gal & Ghrahramani (2016)
-        "layer_dropout": 0.2645,  # dropout_i / dropout_o, Large model Gal & Ghrahramani (2016)
-        "time_dropout": 0.2923,  # dropout_h, Large model Gal & Ghrahramani (2016)
+        "embedding_dropout": 0.1126,  # dropout_x, Large model Gal & Ghrahramani (2016)
+        "layer_dropout": 0.3883,  # dropout_i / dropout_o, Large model Gal & Ghrahramani (2016)
+        "time_dropout": 0.1061,  # dropout_h, Large model Gal & Ghrahramani (2016)
         "vocab_size": 52000,
         "output_size": 20,
         "num_predictions": 10,  # Changed from 1000 because that's just excessive
@@ -211,7 +211,7 @@ DANPLUS_MODEL_PARAMS = {
         "bert_name": "alexanderfalk/danbert-small-cased",
         "batch_size": 32,
         "sequence_length": 128,
-        "lr": 5e-3,
+        "lr": 0.001901,
         "length_scale": 2,
         "weight_decay": 0.1,
         "num_epochs": 20,
@@ -227,8 +227,8 @@ DANPLUS_MODEL_PARAMS = {
         "spectral_norm_upper_bound": 0.99,
         "ridge_factor": 0.001,
         "scaling_coefficient": 0.999,
-        "beta_length_scale": 2,
-        "gp_mean_field_factor": 0.1,
+        "beta_length_scale": 1.8,
+        "gp_mean_field_factor": 0.2647,
         "num_predictions": 10,
         "is_sequence_classifier": False,
     },
