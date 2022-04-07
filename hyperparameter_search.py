@@ -82,15 +82,15 @@ def perform_hyperparameter_search(
     if wandb_run is not None:
         info_dict["config"] = wandb_run.config.as_dict()
 
-    sample_configs = DATASET_SAMPLE_CONFIGS[dataset_name]
+    sample_configs = DATASET_SAMPLE_CONFIGS[dataset_name](None)
     model_params = MODEL_PARAMS[dataset_name][model_name]
 
     # Read data and build data splits
     dataset_builder = AVAILABLE_DATASETS[dataset_name](
         data_dir=data_dir,
         max_length=model_params["sequence_length"],
-        sampler_class=sample_configs[0].sampler_class,
-        sampler_kwargs=sample_configs[0].sampler_kwargs,
+        sampler_class=sample_configs.sampler_class,
+        sampler_kwargs=sample_configs.sampler_kwargs,
     )
     data_splits = dataset_builder.build(
         batch_size=model_params["batch_size"], drop_last=True

@@ -42,61 +42,49 @@ DATASET_TASKS = {
 }
 
 DATASET_SAMPLE_CONFIGS = {
-    "clinc_plus": [
-        SamplerConfig(
-            sampler_class=SequenceClassificationSampler,
-            sampler_kwargs={
-                "train": {
-                    "target_size": train_size,
-                    "num_jobs": 4,
-                }
-                if train_size is not None
-                else None,
+    "clinc_plus": lambda train_size: SamplerConfig(
+        sampler_class=SequenceClassificationSampler,
+        sampler_kwargs={
+            "train": {
+                "target_size": train_size,
+                "num_jobs": 4,
+            }
+            if train_size is not None
+            else None,
+        },
+    ),
+    "dan+": lambda train_size: SamplerConfig(
+        sampler_class=TokenClassificationSampler,
+        sampler_kwargs={
+            "train": {
+                "target_size": train_size,
+                "num_jobs": 4,
+            }
+            if train_size is not None
+            else None,
+        },
+    ),
+    "enwiki": lambda train_size: SamplerConfig(
+        sampler_class=LanguageModellingSampler,
+        sampler_kwargs={
+            "train": {
+                "target_size": train_size,
+                "sample_range": [0, 3],
+                "num_jobs": 4,
             },
-        )
-        for train_size in [6000, 4000, 2000, 1000, 500]
-    ],
-    "dan+": [
-        SamplerConfig(
-            sampler_class=TokenClassificationSampler,
-            sampler_kwargs={
-                "train": {
-                    "target_size": train_size,
-                    "num_jobs": 4,
-                }
-                if train_size is not None
-                else None,
-            },
-        )
-        for train_size in [4000, 2000, 1000, 500]
-    ],
-    "enwiki": [
-        SamplerConfig(
-            sampler_class=LanguageModellingSampler,
-            sampler_kwargs={
-                "train": {
-                    "target_size": train_size,
-                    "sample_range": [0, 3],
-                    "num_jobs": 4,
-                },
-            },
-        )
-        for train_size in [4000, 2000, 1000, 500]
-    ],
-    "finnish_ud": [
-        SamplerConfig(
-            sampler_class=TokenClassificationSampler,
-            sampler_kwargs={
-                "train": {
-                    "target_size": train_size,
-                    "num_jobs": 4,
-                }
-                if train_size is not None
-                else None,
-            },
-        )
-        for train_size in [4000, 2000, 1000, 500]
-    ],
+        },
+    ),
+    "finnish_ud": lambda train_size: SamplerConfig(
+        sampler_class=TokenClassificationSampler,
+        sampler_kwargs={
+            "train": {
+                "target_size": train_size,
+                "num_jobs": 4,
+            }
+            if train_size is not None
+            else None,
+        },
+    ),
 }
 
 MODEL_PARAMS = {

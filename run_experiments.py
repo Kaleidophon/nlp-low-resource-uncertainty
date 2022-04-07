@@ -25,7 +25,7 @@ from nlp_uncertainty_zoo.config import AVAILABLE_MODELS
 from nlp_uncertainty_zoo.utils.custom_types import Device, WandBRun
 
 # PROJECT
-from src.config import MODEL_PARAMS, AVAILABLE_DATASETS
+from src.config import MODEL_PARAMS, AVAILABLE_DATASETS, DATASET_SAMPLE_CONFIGS
 from src.uncertainty_evaluation import evaluate_uncertainty
 
 # CONST
@@ -38,6 +38,7 @@ PROJECT_NAME = "nlp-low-resource-uncertainty"
 
 # GLOBALS
 SECRET_IMPORTED = False
+
 
 # Knockknock support
 try:
@@ -103,6 +104,7 @@ def create_patched_eval(
 def run_experiments(
     model_name: List[str],
     dataset_name: str,
+    training_size: Optional[int],
     runs: int,
     seed: int,
     device: Device,
@@ -121,6 +123,8 @@ def run_experiments(
         Names of models that experiments should be run for.
     dataset_name: str
         Name of the dataset the model should be run on.
+    training_size: Optional[int]
+        Size of the sub-sampled training set. If None, the whole training set is being used.
     runs: int
         Number of runs with different random seeds per model.
     seed: int
@@ -151,10 +155,14 @@ def run_experiments(
 
     # Get model (hyper-)parameters
     model_params = MODEL_PARAMS[dataset_name][model_name]
+    sample_config = DATASET_SAMPLE_CONFIGS[dataset_name](training_size)
 
     # Read data and build data splits
     dataset_builder = AVAILABLE_DATASETS[dataset_name](
-        data_dir=data_dir, max_length=model_params["sequence_length"]
+        data_dir=data_dir,
+        max_length=model_params["sequence_length"],
+        sampler_class=sample_config.sampler_class,
+        sampler_kwargs=sample_config.sampler_kwargs,
     )
     data_splits = dataset_builder.build(
         batch_size=model_params["batch_size"], drop_last=True
@@ -186,7 +194,6 @@ def run_experiments(
             wandb_run=wandb_run,
         )
         scores["train_loss"].append(result_dict["train_loss"])
-        scores["best_val_loss"].append(result_dict["best_val_loss"])
 
         # Evaluate task performance
         model.module.eval()
@@ -220,12 +227,13 @@ def run_experiments(
 
         # Add all info to Weights & Biases
         if wandb_run is not None:
-            wandb_run.log(**task_scores, **uncertainty_scores)
+            wandb_run.log(**{**task_scores, **uncertainty_scores})
 
             if run < runs - 1:
                 wandb_run.finish()
                 wandb_run = wandb.init(
-                    project=PROJECT_NAME, tags=[dataset_name, model_name]
+                    project=PROJECT_NAME,
+                    tags=[dataset_name, model_name, str(training_size)],
                 )
 
     # # Reset for potential next run
@@ -277,6 +285,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=SEED)
     parser.add_argument("--knock", action="store_true", default=False)
     parser.add_argument("--wandb", action="store_true", default=False)
+    parser.add_argument("--training-size", type=int, default=None)
     args = parser.parse_args()
 
     if not os.path.exists(args.result_dir):
@@ -286,7 +295,10 @@ if __name__ == "__main__":
     wandb_run = None
 
     if args.wandb:
-        wandb_run = wandb.init(project=PROJECT_NAME, tags=[args.dataset, args.model])
+        wandb_run = wandb.init(
+            project=PROJECT_NAME,
+            tags=[args.dataset, args.model, str(args.training_size)],
+        )
 
     if args.track_emissions:
         timestamp = str(datetime.now().strftime("%d-%m-%Y (%H:%M:%S)"))
@@ -314,6 +326,7 @@ if __name__ == "__main__":
         run_experiments(
             args.model,
             args.dataset,
+            args.training_size,
             args.runs,
             args.seed,
             args.device,
