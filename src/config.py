@@ -50,7 +50,7 @@ DATASET_SAMPLE_CONFIGS = {
                 "num_jobs": 4,
             }
             if train_size is not None
-            else None,
+            else {},
         },
     ),
     "dan+": lambda train_size: SamplerConfig(
@@ -61,7 +61,7 @@ DATASET_SAMPLE_CONFIGS = {
                 "num_jobs": 4,
             }
             if train_size is not None
-            else None,
+            else {},
         },
     ),
     "enwiki": lambda train_size: SamplerConfig(
@@ -82,7 +82,7 @@ DATASET_SAMPLE_CONFIGS = {
                 "num_jobs": 4,
             }
             if train_size is not None
-            else None,
+            else {},
         },
     ),
 }
