@@ -49,9 +49,9 @@ DATASET_SAMPLE_CONFIGS = {
                 "target_size": train_size,
                 "num_jobs": 4,
             }
-            if train_size is not None
-            else {},
-        },
+        }
+        if train_size is not None
+        else {},
     ),
     "dan+": lambda train_size: SamplerConfig(
         sampler_class=TokenClassificationSampler,
@@ -59,10 +59,10 @@ DATASET_SAMPLE_CONFIGS = {
             "train": {
                 "target_size": train_size,
                 "num_jobs": 4,
-            }
-            if train_size is not None
-            else {},
-        },
+            },
+        }
+        if train_size is not None
+        else {},
     ),
     "enwiki": lambda train_size: SamplerConfig(
         sampler_class=LanguageModellingSampler,
@@ -72,7 +72,9 @@ DATASET_SAMPLE_CONFIGS = {
                 "sample_range": [0, 3],
                 "num_jobs": 4,
             },
-        },
+        }
+        if train_size is not None
+        else {},
     ),
     "finnish_ud": lambda train_size: SamplerConfig(
         sampler_class=TokenClassificationSampler,
@@ -81,9 +83,9 @@ DATASET_SAMPLE_CONFIGS = {
                 "target_size": train_size,
                 "num_jobs": 4,
             }
-            if train_size is not None
-            else {},
-        },
+        }
+        if train_size is not None
+        else {},
     ),
 }
 
