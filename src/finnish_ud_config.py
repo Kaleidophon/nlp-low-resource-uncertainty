@@ -14,12 +14,12 @@ FINNISH_UD_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0.003866,
-        "lr": 0.3074,
+        "weight_decay": 0.005957,
+        "lr": 0.1439,
         "num_epochs": 60,  # Changed from 55 in original
         # "early_stopping_pat": 10,
         "grad_clip": 10,
-        "init_weight": 0.1119,  # Hacky way to include this for replication, this prob. won't be used anywhere else
+        "init_weight": 0.3069,  # Hacky way to include this for replication, this prob. won't be used anywhere else
         "optimizer_class": optim.SGD,
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_step_or_epoch": "epoch",
@@ -30,7 +30,7 @@ FINNISH_UD_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 350,
         "input_size": 650,
-        "dropout": 0.3122,
+        "dropout": 0.1646,
         "vocab_size": 50105,
         "output_size": 16,
         "is_sequence_classifier": False,
@@ -39,12 +39,12 @@ FINNISH_UD_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0.003866,
-        "lr": 0.3074,
+        "weight_decay": 0.005957,
+        "lr": 0.1439,
         "num_epochs": 60,  # Changed from 55 in original
         # "early_stopping_pat": 10,
         "grad_clip": 10,
-        "init_weight": 0.1119,  # Hacky way to include this for replication, this prob. won't be used anywhere else
+        "init_weight": 0.3069,  # Hacky way to include this for replication, this prob. won't be used anywhere else
         "optimizer_class": optim.SGD,
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_step_or_epoch": "epoch",
@@ -55,7 +55,7 @@ FINNISH_UD_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 350,
         "input_size": 650,
-        "dropout": 0.3122,
+        "dropout": 0.1646,
         "vocab_size": 50105,
         "output_size": 16,
         "ensemble_size": 10,
