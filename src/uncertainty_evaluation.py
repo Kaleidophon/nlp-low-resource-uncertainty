@@ -222,7 +222,6 @@ def evaluate_uncertainty(
             )
 
             if seq_len > 1:
-                split_seq_losses = np.concatenate(split_seq_losses, axis=0)
                 seq_uncertainties[metric_name] = np.concatenate(
                     seq_uncertainties[metric_name]
                 )
@@ -232,7 +231,7 @@ def evaluate_uncertainty(
 
         del split_losses, split_predictions, split_labels
 
-    metric_key = list(model_uncertainty_metrics.keys())[0]
+    metric_key = model_uncertainty_metrics[0]
     num_id = len(id_seq_uncertainties[metric_key])
     num_ood = len(ood_seq_uncertainties[metric_key])
 
