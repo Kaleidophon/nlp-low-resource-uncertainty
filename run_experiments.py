@@ -227,7 +227,7 @@ def run_experiments(
 
         # Add all info to Weights & Biases
         if wandb_run is not None:
-            wandb_run.log(**{**task_scores, **uncertainty_scores})
+            wandb_run.log({**task_scores, **uncertainty_scores})
 
             if run < runs - 1:
                 wandb_run.finish()
