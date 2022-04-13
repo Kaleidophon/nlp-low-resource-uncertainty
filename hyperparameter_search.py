@@ -179,7 +179,13 @@ if __name__ == "__main__":
     wandb_run = None
 
     if args.wandb:
-        wandb_run = wandb.init(project=PROJECT_NAME, config=model_params)
+        wandb_run = wandb.init(
+            project=PROJECT_NAME,
+            config=model_params,
+            settings=wandb.Settings(
+                start_method="fork", group=f"{args.dataset} {args.model}"
+            ),
+        )
 
     if args.track_emissions:
         timestamp = str(datetime.now().strftime("%d-%m-%Y (%H:%M:%S)"))

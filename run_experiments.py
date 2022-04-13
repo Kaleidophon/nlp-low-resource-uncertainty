@@ -234,6 +234,8 @@ def run_experiments(
                 wandb_run = wandb.init(
                     project=PROJECT_NAME,
                     tags=[dataset_name, model_name, str(training_size)],
+                    settings=wandb.Settings(start_method="fork"),
+                    group=f"{dataset_name} {model_name} {training_size}",
                 )
 
     # # Reset for potential next run
@@ -298,6 +300,8 @@ if __name__ == "__main__":
         wandb_run = wandb.init(
             project=PROJECT_NAME,
             tags=[args.dataset, args.model, str(args.training_size)],
+            settings=wandb.Settings(start_method="fork"),
+            group=f"{args.dataset} {args.model} {args.training_size}",
         )
 
     if args.track_emissions:
