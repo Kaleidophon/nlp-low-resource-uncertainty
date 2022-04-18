@@ -85,7 +85,22 @@ def create_patched_eval(
             Loss on evaluation split.
         """
         self.module.eval()
-        loss = self._epoch_iter(0, data_split)
+        loss = torch.zeros(1)
+
+        for batch in data_split:
+            attention_mask, input_ids, labels = (
+                batch["attention_mask"].to(self.device),
+                batch["input_ids"].to(self.device),
+                batch["labels"].to(self.device),
+            )
+            batch_loss = self.get_loss(
+                input_ids,
+                labels,
+                attention_mask=attention_mask,
+                wandb_run=wandb_run,
+            )
+
+            loss += batch_loss.cpu().detach()
 
         # Also track uncertainty performance and calibration over time
         if wandb_run is not None:
@@ -242,7 +257,7 @@ def run_experiments(
     if wandb_run is not None:
         wandb_run.log(
             {
-                score_name: f"{np.mean(scores):.4f} ±{np.std(scores):.2f}"
+                f"{score_name}_total": f"{np.mean(scores):.4f} ±{np.std(scores):.2f}"
                 for score_name, scores in scores.items()
             }
         )
@@ -252,7 +267,7 @@ def run_experiments(
             "dataset": dataset_name,
             "runs": runs,
             "scores": {
-                score_name: f"{np.mean(scores):.4f} ±{np.std(scores):.2f}"
+                f"{score_name}_total": f"{np.mean(scores):.4f} ±{np.std(scores):.2f}"
                 for score_name, scores in scores.items()
             },
             "url": wandb.run.get_url(),

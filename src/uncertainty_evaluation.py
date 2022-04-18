@@ -43,7 +43,7 @@ def evaluate_uncertainty(
         Model to be evaluated.
     id_eval_split: DataLoader
         In-distribution data split the model is being evaluated on.
-    odd_eval_split: DataLoader
+    ood_eval_split: DataLoader
         Out-of-distribution data split the model is being evaluated on.
     tokenizer: Optional[PreTrainedTokenizerBase]
         Tokenizer of the evaluated model. If given and predictions_path is specified, the input_ids of (sub-word) tokens
