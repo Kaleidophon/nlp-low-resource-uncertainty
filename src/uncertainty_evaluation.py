@@ -129,8 +129,10 @@ def evaluate_uncertainty(
                     torch.stack([input_ids != idx for idx in ignore_indices]), dim=0
                 ),
                 "b s -> (b s)",
+            ).to(model.device)
+            seq_batch_mask = rearrange(batch_mask, "(b s) -> b s", b=batch_size).to(
+                model.device
             )
-            seq_batch_mask = rearrange(batch_mask, "(b s) -> b s", b=batch_size)
 
             if seq_len > 1:
                 labels = rearrange(labels, "b l -> (b l)")

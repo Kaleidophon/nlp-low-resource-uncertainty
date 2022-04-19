@@ -100,7 +100,7 @@ def create_patched_eval(
                 wandb_run=wandb_run,
             )
 
-            loss += batch_loss.cpu().detach()
+            loss += batch_loss.detach().cpu()
 
         # Also track uncertainty performance and calibration over time
         if wandb_run is not None:
@@ -248,6 +248,7 @@ def run_experiments(
                 wandb_run.finish()
                 wandb_run = wandb.init(
                     project=PROJECT_NAME,
+                    reinit=True,
                     tags=[dataset_name, model_name, str(training_size)],
                     settings=wandb.Settings(start_method="fork"),
                     group=f"{dataset_name} {model_name} {training_size}",
