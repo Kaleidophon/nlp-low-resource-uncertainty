@@ -25,7 +25,7 @@ FINNISH_UD_MODEL_PARAMS = {
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
-            "milestones": torch.LongTensor(range(13, 54, 1)) * 12217,
+            "milestones": range(13 * 12217, 54 * 12217, 12217),
         },
         "num_layers": 2,
         "hidden_size": 350,
@@ -50,7 +50,7 @@ FINNISH_UD_MODEL_PARAMS = {
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
-            "milestones": torch.LongTensor(range(13, 54, 1)) * 12217,
+            "milestones": range(13 * 12217, 54 * 12217, 12217),
         },
         "num_layers": 2,
         "hidden_size": 350,
@@ -75,7 +75,7 @@ FINNISH_UD_MODEL_PARAMS = {
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
-            "milestones": torch.LongTensor(range(13, 54, 1)) * 12217,
+            "milestones": range(13 * 12217, 54 * 12217, 12217),
         },
         "num_layers": 2,
         "hidden_size": 650,
@@ -105,7 +105,7 @@ FINNISH_UD_MODEL_PARAMS = {
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
-            "milestones": torch.LongTensor(range(13, 54, 1)) * 12217,
+            "milestones": range(13 * 12217, 54 * 12217, 12217),
         },
         "num_layers": 2,
         "hidden_size": 350,
@@ -132,7 +132,7 @@ FINNISH_UD_MODEL_PARAMS = {
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
-            "milestones": torch.LongTensor(range(13, 54, 1)) * 12217,
+            "milestones": range(13 * 12217, 54 * 12217, 12217),
         },
         "num_layers": 2,
         "hidden_size": 350,

@@ -24,7 +24,7 @@ CLINC_MODEL_PARAMS = {
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
-            "milestones": torch.LongTensor(range(13, 54, 1)) * 13621,
+            "milestones": range(13 * 13621, 54 * 13621, 13621),
         },
         "num_layers": 3,
         "hidden_size": 650,
@@ -49,7 +49,7 @@ CLINC_MODEL_PARAMS = {
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
-            "milestones": torch.LongTensor(range(13, 54, 1)) * 13621,
+            "milestones": range(13 * 13621, 54 * 13621, 13621),
         },
         "num_layers": 3,
         "hidden_size": 650,
@@ -74,7 +74,7 @@ CLINC_MODEL_PARAMS = {
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
-            "milestones": torch.LongTensor(range(13, 54, 1)) * 13621,
+            "milestones": range(13 * 13621, 54 * 13621, 13621),
         },
         "num_layers": 3,
         "hidden_size": 650,
@@ -104,7 +104,7 @@ CLINC_MODEL_PARAMS = {
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
-            "milestones": torch.LongTensor(range(13, 54, 1)) * 13621,
+            "milestones": range(13 * 13621, 54 * 13621, 13621),
         },
         "num_layers": 3,
         "hidden_size": 650,
@@ -130,7 +130,7 @@ CLINC_MODEL_PARAMS = {
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
-            "milestones": torch.LongTensor(range(13, 54, 1)) * 13621,
+            "milestones": range(13 * 13621, 54 * 13621, 13621),
         },
         "num_layers": 3,
         "hidden_size": 1500,

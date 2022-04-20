@@ -205,6 +205,10 @@ def evaluate_uncertainty(
         split_labels = np.concatenate(split_labels, axis=0)
         split_losses = np.concatenate(split_losses, axis=0)
 
+        # Mask out predictions for -100
+        split_labels = split_labels[split_labels != -100]
+        split_predictions = split_predictions[split_labels != -100]
+
         # Compute calibration scores
         scores[f"{split_name}_ece"] = ece(split_labels, split_predictions)
         scores[f"{split_name}_sce"] = sce(split_labels, split_predictions)
@@ -219,9 +223,20 @@ def evaluate_uncertainty(
         # Compute Kendall's tau scores
         for metric_name in model_uncertainty_metrics:
             uncertainties[metric_name] = np.concatenate(uncertainties[metric_name])
-            scores[f"{split_name}_{metric_name}_kendalls_tau_token"] = kendalls_tau(
-                split_losses, uncertainties[metric_name]
-            )
+
+            # TODO: Potentially remove this control flow
+            if len(uncertainties[metric_name]) > 2 and len(split_losses) > 2:
+                scores[f"{split_name}_{metric_name}_kendalls_tau_token"] = kendalls_tau(
+                    split_losses, uncertainties[metric_name]
+                )
+            else:
+                scores[f"{split_name}_{metric_name}_kendalls_tau_token"] = 0
+
+            # TODO: Potentially remove this
+            if np.isnan(scores[f"{split_name}_{metric_name}_kendalls_tau_token"]):
+                print(
+                    f"NaN found for {split_name}_{metric_name}, values:\n{split_losses}\n{uncertainties[metric_name]}"
+                )
 
             if seq_len > 1:
                 seq_uncertainties[metric_name] = np.concatenate(
