@@ -206,8 +206,9 @@ def evaluate_uncertainty(
         split_losses = np.concatenate(split_losses, axis=0)
 
         # Mask out predictions for -100
-        split_labels = split_labels[split_labels != -100]
-        split_predictions = split_predictions[split_labels != -100]
+        label_mask = split_labels != -100
+        split_labels = split_labels[label_mask]
+        split_predictions = split_predictions[label_mask]
 
         # Compute calibration scores
         scores[f"{split_name}_ece"] = ece(split_labels, split_predictions)
