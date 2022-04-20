@@ -204,6 +204,7 @@ def evaluate_uncertainty(
         split_predictions = np.concatenate(split_predictions, axis=0)
         split_labels = np.concatenate(split_labels, axis=0)
         split_losses = np.concatenate(split_losses, axis=0)
+        split_seq_losses = np.concatenate(split_seq_losses, axis=0)
 
         # Mask out predictions for -100
         label_mask = split_labels != -100
