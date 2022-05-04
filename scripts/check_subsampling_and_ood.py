@@ -12,19 +12,13 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from nlp_uncertainty_zoo.utils.samplers import (
-    LanguageModellingSampler,
     TokenClassificationSampler,
+    SequenceClassificationSampler,
 )
-from nlp_uncertainty_zoo.utils.data import LanguageModellingDatasetBuilder
 from torch.utils.data import DataLoader
 
 # PROJECT
-from src.data import (
-    DanPlusBuilder,
-    FinnishUDBuilder,
-    SwahiliWikiBuilder,
-    EnglishWikiBuilder,
-)
+from src.data import DanPlusBuilder, FinnishUDBuilder, ClincPlusBuilder
 
 # CONST
 SAMPLING_PARAMS_TOKEN_PRED = {"num_jobs": 2, "seed": 1234}
@@ -34,11 +28,12 @@ SAMPLING_PARAMS_LANGUAGE_MODELLING = {
     "sample_range": [0, 3],
 }
 TARGET_SIZES = [100, 250, 500, 1000]
-DATA_DIR = "../data/processed"
+DATA_DIR = "data/processed"
 MAX_LENGTH = 50
 BATCH_SIZE = 1
 IGNORE_TOKENS = [-100, 0, 1, 2, 3, 4]
-IMG_PATH = "../img"
+IMG_PATH = "img"
+TOP_N = 25
 PLOT_STYLE = {
     "axes.facecolor": "white",
     "figure.facecolor": "white",
@@ -49,7 +44,10 @@ PLOT_STYLE = {
     "axes.edgecolor": ".15",
     "grid.color": ".8",
     "ytick.left": True,
+    "text.usetex": True,
 }
+plt.style.use("science")
+COLORS = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
 
 def collect_sentence_length_and_class_dict(
@@ -66,9 +64,14 @@ def collect_sentence_length_and_class_dict(
         input_ids = [
             idx for idx in batch["input_ids"].tolist()[0] if idx not in ignore_tokens
         ]
-        labels = [
-            idx for idx in batch["labels"].tolist()[0] if idx not in ignore_tokens
-        ]
+        # For sequence classification
+        if batch["labels"].shape == (1,):
+            labels = batch["labels"].tolist()
+
+        else:
+            labels = [
+                idx for idx in batch["labels"].tolist()[0] if idx not in ignore_tokens
+            ]
         seq_freqs.update([len(input_ids)])
         class_freqs.update(labels)
         token_freqs.update(input_ids)
@@ -99,6 +102,7 @@ def plot_coverage(
     sizes: List[int],
     type_coverages: List[float],
     token_coverage: List[float],
+    colors: List[str] = None,
     title: Optional[str] = None,
     save_path: Optional[str] = None,
 ):
@@ -114,8 +118,13 @@ def plot_coverage(
     )
 
     with sns.axes_style("whitegrid"):
-        sns.set(font_scale=3, rc={"xtick.bottom": True, **PLOT_STYLE})
+        sns.set(
+            font_scale=3,
+            font="Computer Modern",
+            rc={"xtick.bottom": True, **PLOT_STYLE},
+        )
         sns.set_palette("viridis")
+
         plot = sns.barplot(
             data=data,
             x="size",
@@ -123,8 +132,10 @@ def plot_coverage(
             hue="kind",
             alpha=0.8,
             ci=None,
+            palette=colors,
             edgecolor="black",
         )
+        plot.legend().set_title(None)
 
         if title:
             plot.set_title(title)
@@ -143,6 +154,8 @@ def plot_coverage(
 def plot_dists(
     freqs_orig: Counter,
     freqs_sampled: Counter,
+    x_axis: str = "type",
+    colors: List[str] = None,
     top_n: Optional[int] = None,
     title: Optional[str] = None,
     save_path: Optional[str] = None,
@@ -169,24 +182,30 @@ def plot_dists(
 
     data = pd.DataFrame.from_dict(
         {
-            "type": list(freqs_orig.values()) * 2,
+            x_axis: list(freqs_orig.keys()) * 2,
             "relative frequencies": freqs,
             "corpus": ["original"] * num_types + [compare_label] * num_types,
         }
     )
 
     with sns.axes_style("whitegrid"):
-        sns.set(rc={"figure.figsize": (15, 10), **PLOT_STYLE}, font_scale=3)
+        sns.set(
+            rc={"figure.figsize": (15, 10), **PLOT_STYLE},
+            font_scale=3,
+            font="Computer Modern",
+        )
         plot = sns.barplot(
             data=data,
-            x="type",
+            x=x_axis,
             y="relative frequencies",
             hue="corpus",
             alpha=0.8,
             ci=None,
+            palette=colors,
             edgecolor="black",
         )
         plot.set(xticklabels=[])
+        plot.legend().set_title(None)
 
         if title:
             plot.set_title(title)
@@ -205,6 +224,8 @@ def plot_dists(
 def plot_length_dists(
     freqs_orig: Counter,
     freqs_sampled: Counter,
+    colors: List[str] = None,
+    top_n: Optional[int] = None,
     title: Optional[str] = None,
     save_path: Optional[str] = None,
     compare_label: str = "subsampled",
@@ -212,20 +233,22 @@ def plot_length_dists(
     """
     Plot distributions of sentence lengths in the same histogram.
     """
-    max_length = max(max(freqs_orig.keys()), max(freqs_sampled.keys()))
+    if top_n is None:
+        top_n = max(max(freqs_orig.keys()), max(freqs_sampled.keys()))
+
     total_orig = sum(freqs_orig.values())
     total_sampled = sum(freqs_sampled.values())
-    freqs = np.zeros(2 * max_length)
+    freqs = np.zeros(2 * top_n)
 
-    for length in range(max_length):
+    for length in range(top_n):
         freqs[length] = freqs_orig.get(length, 0) / total_orig
-        freqs[max_length + length] = freqs_sampled.get(length, 0) / total_sampled
+        freqs[top_n + length] = freqs_sampled.get(length, 0) / total_sampled
 
     data = pd.DataFrame.from_dict(
         {
-            "sequence_length": list(range(max_length)) + list(range(max_length)),
+            "sequence_length": list(range(top_n)) + list(range(top_n)),
             "relative frequencies": freqs,
-            "corpus": ["original"] * max_length + [compare_label] * max_length,
+            "corpus": ["original"] * top_n + [compare_label] * top_n,
         }
     )
 
@@ -233,6 +256,7 @@ def plot_length_dists(
         sns.set(
             rc={"figure.figsize": (14, 10), "xtick.bottom": True, **PLOT_STYLE},
             font_scale=3,
+            font="Computer Modern",
         )
 
         plot = sns.barplot(
@@ -242,8 +266,10 @@ def plot_length_dists(
             hue="corpus",
             alpha=0.8,
             ci=None,
+            palette=colors,
             edgecolor="black",
         )
+        plot.legend().set_title(None)
 
         for i, label in enumerate(plot.xaxis.get_ticklabels()):
             if i % 5 != 0:
@@ -266,21 +292,20 @@ def plot_length_dists(
 if __name__ == "__main__":
 
     for dataset_name, builder, sampler_class, sampler_kwargs in zip(
-        ["danplus", "finnish_ud", "swahili_wiki", "english_wiki"],
-        [DanPlusBuilder, FinnishUDBuilder, SwahiliWikiBuilder, EnglishWikiBuilder],
+        ["danplus", "finnish_ud", "clinc_plus"],
+        [DanPlusBuilder, FinnishUDBuilder, ClincPlusBuilder],
         [
             TokenClassificationSampler,
             TokenClassificationSampler,
-            LanguageModellingSampler,
-            LanguageModellingSampler,
+            SequenceClassificationSampler,
         ],
         [
             SAMPLING_PARAMS_TOKEN_PRED,
             SAMPLING_PARAMS_TOKEN_PRED,
-            SAMPLING_PARAMS_LANGUAGE_MODELLING,
-            SAMPLING_PARAMS_LANGUAGE_MODELLING,
+            SAMPLING_PARAMS_TOKEN_PRED,
         ],
     ):
+
         orig_data = builder(data_dir=DATA_DIR, num_jobs=2, max_length=MAX_LENGTH).build(
             batch_size=BATCH_SIZE
         )
@@ -307,7 +332,8 @@ if __name__ == "__main__":
         plot_length_dists(
             orig_seq_freqs,
             ood_seq_freqs,
-            title="Relative sentence length frequencies",
+            colors=COLORS[1::2],
+            # title="Relative sentence length frequencies",
             save_path=f"{IMG_PATH}/{dataset_name}_seq_lengths_ood.png",
             compare_label="ood",
         )
@@ -316,21 +342,25 @@ if __name__ == "__main__":
         plot_dists(
             orig_token_freqs,
             ood_token_freqs,
-            top_n=50,
-            title="Relative type frequencies",
+            colors=COLORS[1::2],
+            top_n=TOP_N,
+            # title="Relative type frequencies",
             save_path=f"{IMG_PATH}/{dataset_name}_type_freqs_ood.png",
             compare_label="ood",
         )
 
         # Plot task distributions
-        plot_dists(
-            orig_label_freqs,
-            ood_label_freqs,
-            top_n=50 if isinstance(builder, LanguageModellingDatasetBuilder) else None,
-            title="Relative type frequencies",
-            save_path=f"{IMG_PATH}/{dataset_name}_class_freqs_ood.png",
-            compare_label="ood",
-        )
+        if dataset_name != "clinc_plus":
+            plot_dists(
+                orig_label_freqs,
+                ood_label_freqs,
+                x_axis="label",
+                colors=COLORS[1::2],
+                top_n=TOP_N,
+                # title="Relative type frequencies",
+                save_path=f"{IMG_PATH}/{dataset_name}_class_freqs_ood.png",
+                compare_label="ood",
+            )
 
         # Perform the same tests for sub-samples of increasing size
         type_coverages, token_coverages = [], []
@@ -366,7 +396,9 @@ if __name__ == "__main__":
             plot_length_dists(
                 orig_seq_freqs,
                 sampled_seq_freqs,
-                title=f"Relative sentence length frequencies (n={target_size})",
+                colors=COLORS[::2],
+                top_n=TOP_N,
+                # title=f"Relative sentence length frequencies (n={target_size})",
                 save_path=f"{IMG_PATH}/{dataset_name}_seq_lengths_{target_size}.png",
             )
 
@@ -374,8 +406,9 @@ if __name__ == "__main__":
             plot_dists(
                 orig_token_freqs,
                 sampled_token_freqs,
-                top_n=50,
-                title=f"Relative type frequencies (n={target_size})",
+                colors=COLORS[::2],
+                top_n=TOP_N,
+                # title=f"Relative type frequencies (n={target_size})",
                 save_path=f"{IMG_PATH}/{dataset_name}_type_freqs_{target_size}.png",
             )
 
@@ -383,10 +416,10 @@ if __name__ == "__main__":
             plot_dists(
                 orig_label_freqs,
                 sampled_label_freqs,
-                top_n=50
-                if isinstance(builder, LanguageModellingDatasetBuilder)
-                else None,
-                title=f"Relative type frequencies (n={target_size})",
+                x_axis="label",
+                colors=COLORS[::2],
+                top_n=TOP_N,
+                # title=f"Relative type frequencies (n={target_size})",
                 save_path=f"{IMG_PATH}/{dataset_name}_class_freqs_{target_size}.png",
             )
 
@@ -395,6 +428,7 @@ if __name__ == "__main__":
             TARGET_SIZES,
             type_coverages,
             token_coverages,
-            title="Type and token coverage of the sub-sampled vocabulary",
+            colors=COLORS[::2],
+            # title="Type and token coverage of the sub-sampled vocabulary",
             save_path=f"{IMG_PATH}/{dataset_name}_coverage.png",
         )

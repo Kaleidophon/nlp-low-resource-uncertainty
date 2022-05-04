@@ -4,3 +4,4 @@ seaborn
 numpy
 pandas
 torch
+SciencePlots

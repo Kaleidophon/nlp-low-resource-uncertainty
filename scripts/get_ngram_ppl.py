@@ -11,18 +11,13 @@ import os
 import numpy as np
 from transformers.tokenization_utils import PreTrainedTokenizer
 from nlp_uncertainty_zoo.utils.samplers import (
-    LanguageModellingSampler,
+    SequenceClassificationSampler,
     TokenClassificationSampler,
 )
 from torch.utils.data import DataLoader
 
 # PROJECT
-from src.data import (
-    DanPlusBuilder,
-    FinnishUDBuilder,
-    SwahiliWikiBuilder,
-    EnglishWikiBuilder,
-)
+from src.data import DanPlusBuilder, FinnishUDBuilder, ClincPlusBuilder
 
 # CONST
 # TODO: Turn these into script args
@@ -92,21 +87,20 @@ if __name__ == "__main__":
 
     # Sub-sample training data and save to temporary file
     for dataset_name, builder, sampler_class, sampler_kwargs in zip(
-        ["danplus", "finnish_ud", "swahili_wiki", "english_wiki"],
-        [DanPlusBuilder, FinnishUDBuilder, SwahiliWikiBuilder, EnglishWikiBuilder],
+        ["danplus", "finnish_ud", "clinc_plus"],
+        [DanPlusBuilder, FinnishUDBuilder, ClincPlusBuilder],
         [
             TokenClassificationSampler,
             TokenClassificationSampler,
-            LanguageModellingSampler,
-            LanguageModellingSampler,
+            SequenceClassificationSampler,
         ],
         [
             SAMPLING_PARAMS_TOKEN_PRED,
             SAMPLING_PARAMS_TOKEN_PRED,
-            SAMPLING_PARAMS_LANGUAGE_MODELLING,
-            SAMPLING_PARAMS_LANGUAGE_MODELLING,
+            SAMPLING_PARAMS_TOKEN_PRED,
         ],
     ):
+
         tmp_path = "./tmp.txt"
         tmp_train_path = "./tmp_train.txt"
         tmp_test_path = "./tmp_test.txt"
