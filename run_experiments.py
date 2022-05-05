@@ -38,6 +38,8 @@ PROJECT_NAME = "nlp-low-resource-uncertainty"
 
 # GLOBALS
 SECRET_IMPORTED = False
+HEADER_ADDED = False
+BATCH_NUM = 0
 
 
 # Knockknock support
@@ -58,12 +60,15 @@ def create_patched_eval(
     iid_data_split: DataLoader,
     ood_data_split: DataLoader,
     tokenizer: PreTrainedTokenizerBase,
+    logging_path: str,
 ):
     """
     Create a modified version of a model's eval function that also tracks uncertainty estimates on the validation
     and OOD test set over time.
 
     """
+    if os.path.exists(logging_path):
+        os.remove(logging_path)
 
     def eval_with_tracking_uncertainties(
         self, data_split: DataLoader, wandb_run: Optional[WandBRun] = None
@@ -103,11 +108,24 @@ def create_patched_eval(
             loss += batch_loss.detach().cpu()
 
         # Also track uncertainty performance and calibration over time
+        scores = evaluate_uncertainty(self, iid_data_split, ood_data_split, tokenizer)
+
         if wandb_run is not None:
-            scores = evaluate_uncertainty(
-                self, iid_data_split, ood_data_split, tokenizer
-            )
             wandb_run.log(scores)
+
+        with open(logging_path, "a") as logging_file:
+            global HEADER_ADDED, BATCH_NUM
+            BATCH_NUM += self.model_params["validation_interval"]
+
+            if not HEADER_ADDED:
+                logging_file.write("\t".join(["batch_num"] + list(scores.keys())))
+                HEADER_ADDED = True
+
+            score_string = "\t".join(
+                [str(BATCH_NUM)] + [f"{score:.4f}" for score in scores.values()]
+            )
+            score_string += "\n"
+            logging_file.write(score_string)
 
         self.module.train()
 
@@ -193,15 +211,15 @@ def run_experiments(
             model_params, model_dir=model_dir, device=device
         )
 
-        # If WandB tracking is enables, patch the object's eval method with the one define at the top of this script
+        # Patch the object's eval method with the one define at the top of this script
         # that also tracks uncertainty properties over the course of the training
-        if wandb_run is not None:
-            patched_eval_func = create_patched_eval(
-                iid_data_split=data_splits["test"],
-                ood_data_split=data_splits["ood_test"],
-                tokenizer=dataset_builder.tokenizer,
-            )
-            model.eval = types.MethodType(patched_eval_func, model)
+        patched_eval_func = create_patched_eval(
+            iid_data_split=data_splits["test"],
+            ood_data_split=data_splits["ood_test"],
+            tokenizer=dataset_builder.tokenizer,
+            logging_path=f"{result_dir}/{model_name}_{timestamp}_stats.csv",
+        )
+        model.eval = types.MethodType(patched_eval_func, model)
 
         result_dict = model.fit(
             train_split=data_splits["train"],
