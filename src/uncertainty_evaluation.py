@@ -236,6 +236,7 @@ def evaluate_uncertainty(
 
             # TODO: Potentially remove this
             if np.isnan(scores[f"{split_name}_{metric_name}_kendalls_tau_token"]):
+                torch.set_printoptions(profile="full")
                 print(
                     f"NaN found for {split_name}_{metric_name}, values:\n{split_losses}\n{uncertainties[metric_name]}"
                 )

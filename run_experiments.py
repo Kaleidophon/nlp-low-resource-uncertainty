@@ -35,6 +35,7 @@ MODEL_DIR = "./models"
 DATA_DIR = "data/processed"
 EMISSION_DIR = "./emissions"
 PROJECT_NAME = "nlp-low-resource-uncertainty"
+WEIGHTED_DATASETS = ("dan+", "finnish_ud")
 
 # GLOBALS
 SECRET_IMPORTED = False
@@ -213,17 +214,19 @@ def run_experiments(
 
         # Patch the object's eval method with the one define at the top of this script
         # that also tracks uncertainty properties over the course of the training
+        training_size_string = f"{training_size}_" if training_size is not None else ""
         patched_eval_func = create_patched_eval(
             iid_data_split=data_splits["test"],
             ood_data_split=data_splits["ood_test"],
             tokenizer=dataset_builder.tokenizer,
-            logging_path=f"{result_dir}/{model_name}_{timestamp}_stats.csv",
+            logging_path=f"{result_dir}/{model_name}_{run+1}_{training_size_string}{timestamp}_stats.csv",
         )
         model.eval = types.MethodType(patched_eval_func, model)
 
         result_dict = model.fit(
             train_split=data_splits["train"],
             valid_split=data_splits["valid"],
+            weight_loss=dataset_name in WEIGHTED_DATASETS,
             wandb_run=wandb_run,
         )
         scores["train_loss"].append(result_dict["train_loss"])

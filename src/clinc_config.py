@@ -129,7 +129,7 @@ CLINC_MODEL_PARAMS = {
         "init_weight": 0.283,  # Hacky way to include this for replication, this prob. won't be used anywhere else
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
-            "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
+            "gamma": 0.8695,  # 1 / 1.15; in the 0.47Zaremba implementation you divide by gamma,
             "milestones": range(13 * 13621, 54 * 13621, 13621),
         },
         "num_layers": 3,
