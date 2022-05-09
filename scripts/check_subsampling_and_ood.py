@@ -29,7 +29,7 @@ SAMPLING_PARAMS_LANGUAGE_MODELLING = {
     "seed": 1234,
     "sample_range": [0, 3],
 }
-TARGET_SIZES = [100, 250, 500, 1000]
+TARGET_SIZES = [100, 1000]
 DATA_DIR = "data/processed"
 MAX_LENGTH = 50
 BATCH_SIZE = 1
@@ -51,9 +51,9 @@ PLOT_STYLE = {
 plt.style.use("science")
 # COLORS = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 PICKLE_PATH = "scripts/subsampling_data.pkl"
-COLORS = ["orangered", "darkmagenta", "plum"]
-EDGECOLORS = ["lightsalmon", "plum", "darkmagenta"]
-HATCHES = ["..", "//", "\\\\"]
+COLORS = ["firebrick", "forestgreen", "midnightblue", "orangered"]
+EDGECOLORS = ["lightcoral", "yellowgreen", "skyblue", "lightsalmon"]
+HATCHES = ["..", "//", "\\\\", "xx", "--"]
 DISPLAY_NAMES = {
     "danplus": "Dan+",
     "finnish_ud": "Finnish UD",
@@ -302,10 +302,12 @@ def plot_length_dists(
 
 def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=False):
 
-    fig, ax = plt.subplots(figsize=(10, 5), ncols=3, sharey="row")
-    width = 0.4
+    fig, ax = plt.subplots(figsize=(10, 5), ncols=len(dataset_names), sharey="row")
+    fig.supxlabel(x_label, alpha=0.6, y=0.06, x=0.525)
+    bar_width = 2
+    skip = 2.5
     data_labels = ["ID", "OOD"]
-    x = np.arange(top_n)
+    x = np.arange(0, top_n * (skip + 2 * bar_width), skip + 2 * bar_width)
 
     for a in ax:
         a.grid(visible=True, axis="both", which="major", linestyle=":", color="grey")
@@ -323,7 +325,7 @@ def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=Fa
             sorted_keys = list(zip(*sorted(data_id.items(), key=lambda t: t[1])))[0]
 
         else:
-            sorted_keys = x
+            sorted_keys = np.arange(top_n)
 
         total_orig = sum(data_id.values())
         total_ood = sum(data_ood.values())
@@ -335,10 +337,10 @@ def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=Fa
             freqs_ood[i] = data_ood.get(key, 0) / total_ood
 
         ax[ax_num].bar(
-            x - width / 2,
+            x - bar_width,
             freqs_id,
             label="ID",
-            width=0.3,
+            width=bar_width,
             color=COLORS[0],
             hatch=HATCHES[0],
             edgecolor=EDGECOLORS[0],
@@ -346,10 +348,10 @@ def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=Fa
             alpha=0.7,
         )
         ax[ax_num].bar(
-            x + width / 2,
+            x + bar_width,
             freqs_ood,
             label="OOD",
-            width=0.3,
+            width=bar_width,
             color=COLORS[1],
             hatch=HATCHES[1],
             edgecolor=EDGECOLORS[1],
@@ -357,11 +359,10 @@ def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=Fa
             alpha=0.7,
         )
         ax[ax_num].title.set_text(DISPLAY_NAMES[dataset_name])
+        ax[ax_num].set_xticklabels([])
+        # if sort:
+        #    ax[ax_num].set_xticklabels(range(top_n + 5, 0, -5))
 
-        if sort:
-            ax[ax_num].set_xticklabels(range(top_n + 5, 0, -5))
-
-    ax[1].set_xlabel(x_label, alpha=0.6)
     ax = ax[0]
     handles, labels = ax.get_legend_handles_labels()
     handles = [h[0] for h in handles]
@@ -377,9 +378,131 @@ def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=Fa
     )
 
 
+def create_subsampled_plot(
+    dataset_names, data, x_label, target, top_n=None, sort=False
+):
+
+    fig, ax = plt.subplots(figsize=(10, 5), ncols=len(dataset_names), sharey="row")
+    fig.supxlabel(x_label, alpha=0.6, y=0.06, x=0.525)
+    bar_width = 1
+    skip = 2.5
+
+    for a in ax:
+        a.grid(visible=True, axis="both", which="major", linestyle=":", color="grey")
+
+    for ax_num, dataset_name in enumerate(dataset_names):
+        data_original = data[dataset_name][f"orig_{target}"]
+        data_subsampled = data[dataset_name]["subsampled"]
+
+        if top_n is not None:
+            data_original = dict(data_original.most_common(top_n))
+            data_subsampled = {
+                target_size: {
+                    f"sampled_{target}": {
+                        type_: data_subsampled[target_size][f"sampled_{target}"][type_]
+                        for type_ in data_original
+                    }
+                }
+                for target_size in TARGET_SIZES
+            }
+
+        else:
+            top_n = len(data_original.keys())
+
+        x = np.arange(
+            0,
+            top_n * (skip + len(TARGET_SIZES) * bar_width),
+            skip + len(TARGET_SIZES) * bar_width,
+        )
+        target_sizes = list(data[dataset_name]["subsampled"].keys())
+
+        # Sort keys by frequency, decendingly
+        if sort:
+            sorted_keys = list(zip(*sorted(data_original.items(), key=lambda t: t[1])))[
+                0
+            ]
+
+        else:
+            sorted_keys = np.arange(top_n)
+
+        total_orig = sum(data_original.values())
+
+        freqs_subsampled = {
+            target_size: np.zeros(top_n) for target_size in target_sizes
+        }
+        total_subsampled = {
+            target_size: sum(data_subsampled[target_size][f"sampled_{target}"].values())
+            for target_size in target_sizes
+        }
+        freqs_id = np.zeros(top_n)
+
+        for i, key in enumerate(sorted_keys):
+            freqs_id[i] = data_original.get(key, 0) / total_orig
+
+            for target_size in target_sizes:
+                freqs_subsampled[target_size][i] = (
+                    data[dataset_name]["subsampled"][target_size][
+                        f"sampled_{target}"
+                    ].get(key, 0)
+                    / total_subsampled[target_size]
+                )
+
+        ax[ax_num].bar(
+            x - bar_width,
+            freqs_id,
+            label="Original",
+            width=bar_width,
+            color=COLORS[0],
+            hatch=HATCHES[0],
+            edgecolor=EDGECOLORS[0],
+            linewidth=0.5,
+            alpha=0.7,
+        )
+
+        for i, target_size in enumerate(target_sizes):
+            ax[ax_num].bar(
+                x - bar_width + (i + 1) * bar_width,
+                freqs_subsampled[target_size],
+                label=target_size,
+                width=bar_width,
+                color=COLORS[1 + i],
+                hatch=HATCHES[1 + i],
+                edgecolor=EDGECOLORS[1 + i],
+                linewidth=0.5,
+                alpha=0.7,
+            )
+        ax[ax_num].title.set_text(DISPLAY_NAMES[dataset_name])
+
+        ax[ax_num].set_xticklabels([])
+        # ax[ax_num].set_xlim([0, top_n * len(TARGET_SIZES)])
+
+        # if sort:
+        #    ax[ax_num].set_xticklabels(range(top_n + 5, 0, -5))
+
+    ax = ax[0]
+    handles, labels = ax.get_legend_handles_labels()
+    handles = [h[0] for h in handles]
+
+    # prepare y-axis
+    ax.set_ylabel("Relative frequency", alpha=0.6)
+    ax.legend(labels=["Original"] + TARGET_SIZES, handles=handles, loc="upper left")
+    # ax.axvline(x=2.5, c="black")
+    fig.tight_layout()
+
+    plt.savefig(
+        f"{IMG_PATH}/{target}_subsampled.pdf",
+        format="pdf",
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+
 if __name__ == "__main__":
     datasets = ["danplus", "finnish_ud", "clinc_plus"]
-    data = {dataset: {"subsampled": {}} for dataset in datasets}
+    data = {
+        dataset: {"subsampled": {target_size: {} for target_size in TARGET_SIZES}}
+        for dataset in datasets
+    }
 
     if os.path.exists(PICKLE_PATH):
         with open(PICKLE_PATH, "rb") as pkl_file:
@@ -450,13 +573,13 @@ if __name__ == "__main__":
                     subsampled_data["train"], ignore_tokens=IGNORE_TOKENS
                 )
 
-                data[dataset_name]["subsampled"][
+                data[dataset_name]["subsampled"][target_size][
                     "sampled_seq_freqs"
                 ] = sampled_seq_freqs
-                data[dataset_name]["subsampled"][
+                data[dataset_name]["subsampled"][target_size][
                     "sampled_token_freqs"
                 ] = sampled_token_freqs
-                data[dataset_name]["subsampled"][
+                data[dataset_name]["subsampled"][target_size][
                     "sampled_label_freqs"
                 ] = sampled_label_freqs
 
@@ -472,7 +595,7 @@ if __name__ == "__main__":
         datasets,
         data,
         x_label="Sequence length",
-        top_n=40,
+        top_n=25,
         target="seq_freqs",
         sort=False,
     )
@@ -483,7 +606,22 @@ if __name__ == "__main__":
     )
 
     # Relative frequency of labels for finnish / danish for original and subsampled
+    datasets_wo_clinc = datasets[:2]
+    create_subsampled_plot(
+        datasets_wo_clinc, data, x_label="Label Rank", target="label_freqs", sort=True
+    )
 
     # Relative frequency of sentence length for all languages for original and subsampled
+    create_subsampled_plot(
+        datasets,
+        data,
+        x_label="Sequence length",
+        target="seq_freqs",
+        top_n=20,
+        sort=False,
+    )
 
     # Relative frequency of top 25 types for all languages for original and subsampled
+    create_subsampled_plot(
+        datasets, data, x_label="Type Rank", target="token_freqs", top_n=20, sort=True
+    )
