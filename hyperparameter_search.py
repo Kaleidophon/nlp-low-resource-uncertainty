@@ -26,7 +26,7 @@ SEED = 123
 DATA_DIR = "./data/processed"
 SECRET_IMPORTED = False
 PROJECT_NAME = "nlp-low-resource-uncertainty"
-
+WEIGHTED_DATASETS = ("dan+", "finnish_ud")
 
 try:
     from secret import TELEGRAM_API_TOKEN, TELEGRAM_CHAT_ID, COUNTRY_CODE
@@ -103,6 +103,7 @@ def perform_hyperparameter_search(
         module.fit(
             train_split=data_splits["train"],
             valid_split=data_splits["valid"],
+            weight_loss=dataset_name in WEIGHTED_DATASETS,
             verbose=verbose,
             wandb_run=wandb_run,
         )

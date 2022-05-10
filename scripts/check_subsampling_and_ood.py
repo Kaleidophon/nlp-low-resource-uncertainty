@@ -307,7 +307,6 @@ def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=Fa
     bar_width = 2
     skip = 2.5
     data_labels = ["ID", "OOD"]
-    x = np.arange(0, top_n * (skip + 2 * bar_width), skip + 2 * bar_width)
 
     for a in ax:
         a.grid(visible=True, axis="both", which="major", linestyle=":", color="grey")
@@ -319,6 +318,10 @@ def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=Fa
         if top_n is not None:
             data_id = dict(data_id.most_common(top_n))
             data_ood = {type_: data_ood[type_] for type_ in data_id}
+        else:
+            top_n = len(data_id)
+
+        x = np.arange(0, top_n * (skip + 2 * bar_width), skip + 2 * bar_width)
 
         # Sort keys by frequency, decendingly
         if sort:
@@ -337,7 +340,7 @@ def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=Fa
             freqs_ood[i] = data_ood.get(key, 0) / total_ood
 
         ax[ax_num].bar(
-            x - bar_width,
+            x - bar_width / 2,
             freqs_id,
             label="ID",
             width=bar_width,
@@ -348,7 +351,7 @@ def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=Fa
             alpha=0.7,
         )
         ax[ax_num].bar(
-            x + bar_width,
+            x + bar_width / 2,
             freqs_ood,
             label="OOD",
             width=bar_width,
@@ -589,6 +592,7 @@ if __name__ == "__main__":
             pickle.dump(data, pkl_file)
 
     # Create the following plots
+    datasets_wo_clinc = datasets[:2]
 
     # Sequence length distributions ID / OOD for all languages side by side
     create_id_ood_plot(
@@ -605,8 +609,12 @@ if __name__ == "__main__":
         datasets, data, x_label="Type Rank", target="token_freqs", top_n=25, sort=True
     )
 
+    # Label frequency comparisons between ID / OOD
+    create_id_ood_plot(
+        datasets_wo_clinc, data, x_label="Label Rank", target="label_freqs", sort=True
+    )
+
     # Relative frequency of labels for finnish / danish for original and subsampled
-    datasets_wo_clinc = datasets[:2]
     create_subsampled_plot(
         datasets_wo_clinc, data, x_label="Label Rank", target="label_freqs", sort=True
     )
