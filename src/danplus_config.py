@@ -158,8 +158,8 @@ DANPLUS_MODEL_PARAMS = {
         "scheduler_class": transformers.get_linear_schedule_with_warmup,
         "scheduler_kwargs": {
             # Warmup prob: 0.1
-            "num_warmup_steps": 87640,
-            "num_training_steps": 8764,
+            "num_warmup_steps": 8764,
+            "num_training_steps": 87640,
         },
         "output_size": 20,
         "is_sequence_classifier": False,
@@ -181,8 +181,8 @@ DANPLUS_MODEL_PARAMS = {
         "scheduler_step_or_epoch": "epoch",
         "scheduler_kwargs": {
             # Warmup prob: 0.1
-            "num_warmup_steps": 87640,
-            "num_training_steps": 8764,
+            "num_warmup_steps": 8764,
+            "num_training_steps": 87640,
         },
         "output_size": 20,
         "num_predictions": 10,
@@ -200,8 +200,8 @@ DANPLUS_MODEL_PARAMS = {
         "scheduler_step_or_epoch": "epoch",
         "scheduler_kwargs": {
             # Warmup prob: 0.1
-            "num_warmup_steps": 87640,
-            "num_training_steps": 8764,
+            "num_warmup_steps": 8764,
+            "num_training_steps": 87640,
         },
         "output_size": 20,
         "num_predictions": 10,
@@ -224,8 +224,8 @@ DANPLUS_MODEL_PARAMS = {
         "scheduler_step_or_epoch": "epoch",
         "scheduler_kwargs": {
             # Warmup prob: 0.1
-            "num_warmup_steps": 87640,
-            "num_training_steps": 8764,
+            "num_warmup_steps": 8764,
+            "num_training_steps": 87640,
         },
         "output_size": 20,
         "last_layer_size": 768,

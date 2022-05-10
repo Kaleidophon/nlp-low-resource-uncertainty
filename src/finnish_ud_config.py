@@ -157,8 +157,8 @@ FINNISH_UD_MODEL_PARAMS = {
         "scheduler_class": transformers.get_linear_schedule_with_warmup,
         "scheduler_kwargs": {
             # Warmup prob: 0.1
-            "num_warmup_steps": 244340,
-            "num_training_steps": 24434,
+            "num_warmup_steps": 24434,
+            "num_training_steps": 244340,
         },
         "output_size": 16,
         "is_sequence_classifier": False,
@@ -179,8 +179,8 @@ FINNISH_UD_MODEL_PARAMS = {
         "scheduler_class": transformers.get_linear_schedule_with_warmup,
         "scheduler_kwargs": {
             # Warmup prob: 0.1
-            "num_warmup_steps": 244340,
-            "num_training_steps": 24434,
+            "num_warmup_steps": 24434,
+            "num_training_steps": 244340,
         },
         "output_size": 16,
         "num_predictions": 10,
@@ -197,8 +197,8 @@ FINNISH_UD_MODEL_PARAMS = {
         "scheduler_class": transformers.get_linear_schedule_with_warmup,
         "scheduler_kwargs": {
             # Warmup prob: 0.1
-            "num_warmup_steps": 244340,
-            "num_training_steps": 24434,
+            "num_warmup_steps": 24434,
+            "num_training_steps": 244340,
         },
         "output_size": 16,
         "num_predictions": 10,
@@ -220,8 +220,8 @@ FINNISH_UD_MODEL_PARAMS = {
         "scheduler_class": transformers.get_linear_schedule_with_warmup,
         "scheduler_kwargs": {
             # Warmup prob: 0.1
-            "num_warmup_steps": 244340,
-            "num_training_steps": 24434,
+            "num_warmup_steps": 24434,
+            "num_training_steps": 244340,
         },
         "output_size": 16,
         "last_layer_size": 768,

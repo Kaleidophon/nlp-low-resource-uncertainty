@@ -90,216 +90,6 @@ def collect_sentence_length_and_class_dict(
     return seq_freqs, token_freqs, class_freqs
 
 
-def compute_coverage(
-    token_freqs_orig: Counter, token_freqs_sampled: Counter
-) -> Tuple[float, float]:
-    """
-    Computer the average coverage of the vocabulary (percentage of types and tokens) of the sub-sampled corpus compared
-    to the original corpus.
-    """
-    type_percentage = len(token_freqs_sampled) / len(token_freqs_orig)
-
-    token_percentage = 0
-
-    for token in token_freqs_sampled:
-        token_percentage += token_freqs_orig[token]
-
-    token_percentage /= sum(token_freqs_orig.values())
-
-    return type_percentage, token_percentage
-
-
-def plot_coverage(
-    sizes: List[int],
-    type_coverages: List[float],
-    token_coverage: List[float],
-    colors: List[str] = None,
-    title: Optional[str] = None,
-    save_path: Optional[str] = None,
-):
-    """
-    Plot the type and token coverage as a function of sub-sampled corpus size.
-    """
-    data = pd.DataFrame.from_dict(
-        {
-            "size": sizes * 2,
-            "coverage": type_coverages + token_coverage,
-            "kind": ["type"] * len(sizes) + ["token"] * len(sizes),
-        }
-    )
-
-    with sns.axes_style("whitegrid"):
-        sns.set(
-            font_scale=3,
-            font="Computer Modern",
-            rc={"xtick.bottom": True, **PLOT_STYLE},
-        )
-        sns.set_palette("viridis")
-
-        plot = sns.barplot(
-            data=data,
-            x="size",
-            y="coverage",
-            hue="kind",
-            alpha=0.8,
-            ci=None,
-            palette=colors,
-            edgecolor="black",
-        )
-        plot.legend().set_title(None)
-
-        if title:
-            plot.set_title(title)
-
-        plt.tight_layout()
-
-        if save_path is None:
-            plt.show()
-
-        else:
-            plt.savefig(save_path)
-
-        plt.close()
-
-
-def plot_dists(
-    freqs_orig: Counter,
-    freqs_sampled: Counter,
-    x_axis: str = "type",
-    colors: List[str] = None,
-    top_n: Optional[int] = None,
-    title: Optional[str] = None,
-    save_path: Optional[str] = None,
-    compare_label: str = "subsampled",
-):
-    """
-    Plot distributions of the top(-n) tokens and labels in the same histogram.
-    """
-    if top_n is not None:
-        freqs_orig = dict(freqs_orig.most_common(top_n))
-        freqs_sampled = {type_: freqs_sampled[type_] for type_ in freqs_orig}
-
-    # Sort keys by frequency, decendingly
-    sorted_keys = list(zip(*sorted(freqs_orig.items(), key=lambda t: t[1])))[0]
-
-    num_types = len(freqs_orig)
-    total_orig = sum(freqs_orig.values())
-    total_sampled = sum(freqs_sampled.values())
-    freqs = np.zeros(2 * num_types)
-
-    for i, key in enumerate(sorted_keys):
-        freqs[i] = freqs_orig.get(key, 0) / total_orig
-        freqs[i + num_types] = freqs_sampled.get(key, 0) / total_sampled
-
-    data = pd.DataFrame.from_dict(
-        {
-            x_axis: list(freqs_orig.keys()) * 2,
-            "relative frequencies": freqs,
-            "corpus": ["original"] * num_types + [compare_label] * num_types,
-        }
-    )
-
-    with sns.axes_style("whitegrid"):
-        sns.set(
-            rc={"figure.figsize": (15, 10), **PLOT_STYLE},
-            font_scale=3,
-            font="Computer Modern",
-        )
-        plot = sns.barplot(
-            data=data,
-            x=x_axis,
-            y="relative frequencies",
-            hue="corpus",
-            alpha=0.8,
-            ci=None,
-            palette=colors,
-            edgecolor="black",
-        )
-        plot.set(xticklabels=[])
-        plot.legend().set_title(None)
-
-        if title:
-            plot.set_title(title)
-
-        plt.tight_layout()
-
-        if save_path is None:
-            plt.show()
-
-        else:
-            plt.savefig(save_path)
-
-        plt.close()
-
-
-def plot_length_dists(
-    freqs_orig: Counter,
-    freqs_sampled: Counter,
-    colors: List[str] = None,
-    top_n: Optional[int] = None,
-    title: Optional[str] = None,
-    save_path: Optional[str] = None,
-    compare_label: str = "subsampled",
-):
-    """
-    Plot distributions of sentence lengths in the same histogram.
-    """
-    if top_n is None:
-        top_n = max(max(freqs_orig.keys()), max(freqs_sampled.keys()))
-
-    total_orig = sum(freqs_orig.values())
-    total_sampled = sum(freqs_sampled.values())
-    freqs = np.zeros(2 * top_n)
-
-    for length in range(top_n):
-        freqs[length] = freqs_orig.get(length, 0) / total_orig
-        freqs[top_n + length] = freqs_sampled.get(length, 0) / total_sampled
-
-    data = pd.DataFrame.from_dict(
-        {
-            "sequence_length": list(range(top_n)) + list(range(top_n)),
-            "relative frequencies": freqs,
-            "corpus": ["original"] * top_n + [compare_label] * top_n,
-        }
-    )
-
-    with sns.axes_style("whitegrid"):
-        sns.set(
-            rc={"figure.figsize": (14, 10), "xtick.bottom": True, **PLOT_STYLE},
-            font_scale=3,
-            font="Computer Modern",
-        )
-
-        plot = sns.barplot(
-            data=data,
-            x="sequence_length",
-            y="relative frequencies",
-            hue="corpus",
-            alpha=0.8,
-            ci=None,
-            palette=colors,
-            edgecolor="black",
-        )
-        plot.legend().set_title(None)
-
-        for i, label in enumerate(plot.xaxis.get_ticklabels()):
-            if i % 5 != 0:
-                label.set_visible(False)
-
-        if title:
-            plot.set_title(title)
-
-        plt.tight_layout()
-
-        if save_path is None:
-            plt.show()
-
-        else:
-            plt.savefig(save_path)
-
-        plt.close()
-
-
 def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=False):
 
     fig, ax = plt.subplots(figsize=(10, 5), ncols=len(dataset_names), sharey="row")
@@ -611,12 +401,22 @@ if __name__ == "__main__":
 
     # Label frequency comparisons between ID / OOD
     create_id_ood_plot(
-        datasets_wo_clinc, data, x_label="Label Rank", target="label_freqs", sort=True
+        datasets_wo_clinc,
+        data,
+        x_label="Label Rank",
+        target="label_freqs",
+        sort=True,
+        break_yaxis={"ylims": ((0, 0.4), (0.85, 1)), "hspace": 0.05},
     )
 
     # Relative frequency of labels for finnish / danish for original and subsampled
     create_subsampled_plot(
-        datasets_wo_clinc, data, x_label="Label Rank", target="label_freqs", sort=True
+        datasets_wo_clinc,
+        data,
+        x_label="Label Rank",
+        target="label_freqs",
+        sort=True,
+        # break_yaxis={"hspace": 0.05}
     )
 
     # Relative frequency of sentence length for all languages for original and subsampled
