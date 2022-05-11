@@ -82,7 +82,6 @@ def evaluate_uncertainty(
         split_labels = []  # Collect all labels on this split
         split_losses = []  # Collect all (token) losses on this split
         split_seq_losses = []  # Collect all sequence losses on this split
-        is_sequence_classification = False
 
         for batch in eval_split:
             attention_mask, input_ids, labels = (
@@ -96,7 +95,6 @@ def evaluate_uncertainty(
                 batch_size, seq_len = labels.shape
             else:
                 batch_size, seq_len = labels.shape[0], 1
-                is_sequence_classification = True
 
             # Get predictions
             predictions = model.predict(input_ids, attention_mask=attention_mask)
@@ -126,7 +124,6 @@ def evaluate_uncertainty(
             predictions = rearrange(predictions, "b t p -> (b t) p")
 
             # Filter irrelevant tokens for language modelling / sequence labelling / token predictions
-            # TODO: Refactor
             ignore_indices = tokenizer.all_special_ids + [-100]
             batch_mask = rearrange(
                 torch.all(
@@ -139,7 +136,7 @@ def evaluate_uncertainty(
             )
 
             # If the task is not sequence classification, we also compute the (mean) sequence loss
-            if not is_sequence_classification:
+            if not model.module.is_sequence_classifier:
                 labels = rearrange(labels, "b l -> (b l)")
 
                 # Mask out losses for ignore tokens and recompute sequence losses
@@ -156,6 +153,10 @@ def evaluate_uncertainty(
 
                 predictions = predictions[batch_mask]
                 labels = labels[batch_mask]
+
+            else:
+                seq_losses = loss_func(predictions, labels)
+                split_seq_losses.append(seq_losses.detach().cpu().numpy())
 
             split_predictions.append(predictions.detach().cpu().numpy())
             split_labels.append(labels.detach().cpu().numpy())
@@ -180,7 +181,7 @@ def evaluate_uncertainty(
                 uncertainty = rearrange(uncertainty, "b l -> (b l)")
 
                 # Filter uncertainties for uninteresting tokens
-                if not is_sequence_classification:
+                if not model.module.is_sequence_classifier:
                     uncertainty = uncertainty[batch_mask]
 
                     # Get the sequence uncertainties setting non batch-mask tokens to zero and re-normalizing means
@@ -195,14 +196,16 @@ def evaluate_uncertainty(
                         seq_uncertainty.detach().cpu().numpy()
                     )
 
+                    uncertainties[metric_name].append(
+                        uncertainty.detach().cpu().numpy()
+                    )
+
                 # Sequence classification tasks, sequence uncertainties are just the uncertainties of the single
                 # sequence-wide prediction
                 else:
                     seq_uncertainties[metric_name].append(
                         uncertainty.detach().cpu().numpy()
                     )
-
-                uncertainties[metric_name].append(uncertainty.detach().cpu().numpy())
 
             sentence_i += batch_size
 
@@ -211,8 +214,7 @@ def evaluate_uncertainty(
         split_labels = np.concatenate(split_labels, axis=0)
         split_losses = np.concatenate(split_losses, axis=0)
 
-        if not is_sequence_classification:
-            split_seq_losses = np.concatenate(split_seq_losses, axis=0)
+        split_seq_losses = np.concatenate(split_seq_losses, axis=0)
 
         # Mask out predictions for -100
         label_mask = split_labels != -100
@@ -232,19 +234,20 @@ def evaluate_uncertainty(
 
         # Compute Kendall's tau scores
         for metric_name in model_uncertainty_metrics:
-            uncertainties[metric_name] = np.concatenate(uncertainties[metric_name])
 
-            scores[f"{split_name}_{metric_name}_kendalls_tau_token"] = kendalls_tau(
-                split_losses, uncertainties[metric_name]
+            if not model.module.is_sequence_classifier:
+                uncertainties[metric_name] = np.concatenate(uncertainties[metric_name])
+
+                scores[f"{split_name}_{metric_name}_kendalls_tau_token"] = kendalls_tau(
+                    split_losses, uncertainties[metric_name]
+                )
+
+            seq_uncertainties[metric_name] = np.concatenate(
+                seq_uncertainties[metric_name]
             )
-
-            if not is_sequence_classification:
-                seq_uncertainties[metric_name] = np.concatenate(
-                    seq_uncertainties[metric_name]
-                )
-                scores[f"{split_name}_{metric_name}_kendalls_tau_seq"] = kendalls_tau(
-                    split_seq_losses, seq_uncertainties[metric_name]
-                )
+            scores[f"{split_name}_{metric_name}_kendalls_tau_seq"] = kendalls_tau(
+                split_seq_losses, seq_uncertainties[metric_name]
+            )
 
         del split_losses, split_predictions, split_labels
 
