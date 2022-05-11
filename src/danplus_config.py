@@ -147,6 +147,7 @@ DANPLUS_MODEL_PARAMS = {
     },
     "ddu_bert": {
         "bert_name": "alexanderfalk/danbert-small-cased",
+        "ignore_indices": [-100, 0, 1, 2, 3],
         "batch_size": 32,
         "sequence_length": 128,
         "lr": 0.1832,

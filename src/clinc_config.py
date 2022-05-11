@@ -212,6 +212,7 @@ CLINC_MODEL_PARAMS = {
     },
     "ddu_bert": {
         "bert_name": "bert-base-uncased",
+        "ignore_indices": [-100, 0, 101, 102, 103],
         "batch_size": 32,
         "sequence_length": 128,
         "lr": 0.00651,
@@ -226,7 +227,7 @@ CLINC_MODEL_PARAMS = {
             "num_training_steps": 272420,
         },
         "output_size": 28996,
-        "projection_size": 256,
+        "projection_size": 64,
         "is_sequence_classifier": True,
         "spectral_norm_upper_bound": 0.9175,
     },

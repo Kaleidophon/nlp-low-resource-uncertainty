@@ -126,6 +126,7 @@ def evaluate_uncertainty(
             predictions = rearrange(predictions, "b t p -> (b t) p")
 
             # Filter irrelevant tokens for language modelling / sequence labelling / token predictions
+            # TODO: Refactor
             ignore_indices = tokenizer.all_special_ids + [-100]
             batch_mask = rearrange(
                 torch.all(

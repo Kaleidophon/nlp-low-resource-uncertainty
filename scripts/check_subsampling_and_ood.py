@@ -33,6 +33,7 @@ TARGET_SIZES = [100, 1000]
 DATA_DIR = "data/processed"
 MAX_LENGTH = 50
 BATCH_SIZE = 1
+# TODO: Refactor
 IGNORE_TOKENS = [-100, 0, 1, 2, 3, 4]
 IMG_PATH = "img"
 TOP_N = 25

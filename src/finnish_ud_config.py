@@ -147,6 +147,7 @@ FINNISH_UD_MODEL_PARAMS = {
     },
     "ddu_bert": {
         "bert_name": "TurkuNLP/bert-base-finnish-cased-v1",
+        "ignore_indices": [-100, 0, 102, 103, 104],
         "batch_size": 32,
         "sequence_length": 128,
         "lr": 0.03114,
