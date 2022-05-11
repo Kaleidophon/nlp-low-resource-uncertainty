@@ -78,10 +78,11 @@ def evaluate_uncertainty(
         ("id", id_eval_split, id_uncertainties, id_seq_uncertainties),
         ("ood", ood_eval_split, ood_uncertainties, ood_seq_uncertainties),
     ]:
-        split_predictions = []
-        split_labels = []
-        split_losses = []
-        split_seq_losses = []
+        split_predictions = []  # Collect all predictions on this split
+        split_labels = []  # Collect all labels on this split
+        split_losses = []  # Collect all (token) losses on this split
+        split_seq_losses = []  # Collect all sequence losses on this split
+        is_sequence_classification = False
 
         for batch in eval_split:
             attention_mask, input_ids, labels = (
@@ -95,11 +96,12 @@ def evaluate_uncertainty(
                 batch_size, seq_len = labels.shape
             else:
                 batch_size, seq_len = labels.shape[0], 1
+                is_sequence_classification = True
 
             # Get predictions
             predictions = model.predict(input_ids, attention_mask=attention_mask)
 
-            # Save predictions and labels
+            # Save predictions and labels in DataFrame which will later be written to file
             if predictions_path is not None:
                 for batch_i in range(batch_size):
                     predictions_df.at[
@@ -120,6 +122,7 @@ def evaluate_uncertainty(
                         .tolist()
                     )  # Write predictions
 
+            # Reshape for easier processing
             predictions = rearrange(predictions, "b t p -> (b t) p")
 
             # Filter irrelevant tokens for language modelling / sequence labelling / token predictions
@@ -134,7 +137,8 @@ def evaluate_uncertainty(
                 model.device
             )
 
-            if seq_len > 1:
+            # If the task is not sequence classification, we also compute the (mean) sequence loss
+            if not is_sequence_classification:
                 labels = rearrange(labels, "b l -> (b l)")
 
                 # Mask out losses for ignore tokens and recompute sequence losses
@@ -175,7 +179,7 @@ def evaluate_uncertainty(
                 uncertainty = rearrange(uncertainty, "b l -> (b l)")
 
                 # Filter uncertainties for uninteresting tokens
-                if seq_len > 1:
+                if not is_sequence_classification:
                     uncertainty = uncertainty[batch_mask]
 
                     # Get the sequence uncertainties setting non batch-mask tokens to zero and re-normalizing means
@@ -201,10 +205,13 @@ def evaluate_uncertainty(
 
             sentence_i += batch_size
 
+        # Simply all data structures
         split_predictions = np.concatenate(split_predictions, axis=0)
         split_labels = np.concatenate(split_labels, axis=0)
         split_losses = np.concatenate(split_losses, axis=0)
-        split_seq_losses = np.concatenate(split_seq_losses, axis=0)
+
+        if not is_sequence_classification:
+            split_seq_losses = np.concatenate(split_seq_losses, axis=0)
 
         # Mask out predictions for -100
         label_mask = split_labels != -100
@@ -226,22 +233,11 @@ def evaluate_uncertainty(
         for metric_name in model_uncertainty_metrics:
             uncertainties[metric_name] = np.concatenate(uncertainties[metric_name])
 
-            # TODO: Potentially remove this control flow
-            if len(uncertainties[metric_name]) > 2 and len(split_losses) > 2:
-                scores[f"{split_name}_{metric_name}_kendalls_tau_token"] = kendalls_tau(
-                    split_losses, uncertainties[metric_name]
-                )
-            else:
-                scores[f"{split_name}_{metric_name}_kendalls_tau_token"] = 0
+            scores[f"{split_name}_{metric_name}_kendalls_tau_token"] = kendalls_tau(
+                split_losses, uncertainties[metric_name]
+            )
 
-            # TODO: Potentially remove this
-            if np.isnan(scores[f"{split_name}_{metric_name}_kendalls_tau_token"]):
-                torch.set_printoptions(profile="full")
-                print(
-                    f"NaN found for {split_name}_{metric_name}, values:\n{split_losses}\n{uncertainties[metric_name]}"
-                )
-
-            if seq_len > 1:
+            if not is_sequence_classification:
                 seq_uncertainties[metric_name] = np.concatenate(
                     seq_uncertainties[metric_name]
                 )
