@@ -5,12 +5,10 @@ Create sub-sampled version of training sets and check corpus statistics to ensur
 # STD
 from collections import Counter
 import os
-from typing import Tuple, List, Optional
+from typing import Tuple, List
 
 # EXT
 import numpy as np
-import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 from nlp_uncertainty_zoo.utils.samplers import (
     TokenClassificationSampler,
