@@ -5,9 +5,12 @@ Create sub-sampled version of training sets and check corpus statistics to ensur
 # STD
 from collections import Counter
 import os
-from typing import Tuple, List
+import string
+from typing import Tuple, List, Optional
 
 # EXT
+from sklearn.preprocessing import LabelEncoder
+from transformers.tokenization_utils import PreTrainedTokenizerBase
 import numpy as np
 import matplotlib.pyplot as plt
 from nlp_uncertainty_zoo.utils.samplers import (
@@ -31,8 +34,7 @@ TARGET_SIZES = [100, 1000]
 DATA_DIR = "data/processed"
 MAX_LENGTH = 50
 BATCH_SIZE = 1
-# TODO: Refactor
-IGNORE_TOKENS = [-100, 0, 1, 2, 3, 4]
+IGNORE_PUNCTUATION = list(string.punctuation) + ["”"] + list(map(str, range(0, 10)))
 IMG_PATH = "img"
 TOP_N = 25
 PLOT_STYLE = {
@@ -48,7 +50,6 @@ PLOT_STYLE = {
     "text.usetex": True,
 }
 plt.style.use("science")
-# COLORS = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 PICKLE_PATH = "scripts/subsampling_data.pkl"
 COLORS = ["firebrick", "forestgreen", "midnightblue", "orangered"]
 EDGECOLORS = ["lightcoral", "yellowgreen", "skyblue", "lightsalmon"]
@@ -61,7 +62,11 @@ DISPLAY_NAMES = {
 
 
 def collect_sentence_length_and_class_dict(
-    dataloader: DataLoader, ignore_tokens: List[int]
+    dataloader: DataLoader,
+    ignore_tokens: List[int],
+    stop_words: Optional[List[str]] = None,
+    tokenizer: Optional[PreTrainedTokenizerBase] = None,
+    label_encoder: Optional[LabelEncoder] = None,
 ) -> Tuple[Counter, Counter, Counter]:
     """
     Collect the frequencies of sentence lengths and classes.
@@ -74,6 +79,17 @@ def collect_sentence_length_and_class_dict(
         input_ids = [
             idx for idx in batch["input_ids"].tolist()[0] if idx not in ignore_tokens
         ]
+
+        if stop_words is not None and tokenizer is not None:
+            sentence = tokenizer.decode(input_ids)
+
+            for char in IGNORE_PUNCTUATION:
+                sentence = sentence.replace(char, "")
+
+            input_ids = list(
+                filter(lambda token: token not in stop_words, sentence.split())
+            )
+
         # For sequence classification
         if batch["labels"].shape == (1,):
             labels = batch["labels"].tolist()
@@ -82,14 +98,31 @@ def collect_sentence_length_and_class_dict(
             labels = [
                 idx for idx in batch["labels"].tolist()[0] if idx not in ignore_tokens
             ]
+
         seq_freqs.update([len(input_ids)])
         class_freqs.update(labels)
         token_freqs.update(input_ids)
 
+    if label_encoder is not None:
+        class_freqs = Counter(
+            {
+                label_encoder.inverse_transform([key])[0]: value
+                for key, value in class_freqs.items()
+            }
+        )
+
+    # if tokenizer is not None:
+    #    token_freqs = Counter({
+    #        tokenizer.decode(key): value
+    #        for key, value in token_freqs.items()
+    #    })
+
     return seq_freqs, token_freqs, class_freqs
 
 
-def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=False):
+def create_id_ood_plot(
+    dataset_names, data, x_label, target, top_n=None, sort=False, text_labels=False
+):
 
     fig, ax = plt.subplots(figsize=(10, 5), ncols=len(dataset_names), sharey="row")
     fig.supxlabel(x_label, alpha=0.6, y=0.06, x=0.525)
@@ -119,6 +152,16 @@ def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=Fa
         else:
             sorted_keys = np.arange(top_n)
 
+        if text_labels:
+            plt.sca(ax[ax_num])
+            plt.xticks(x, sorted_keys, fontsize=8, alpha=0.7)
+            plt.setp(
+                ax[ax_num].get_xticklabels(),
+                rotation=50,
+                ha="right",
+                rotation_mode="anchor",
+            )
+
         total_orig = sum(data_id.values())
         total_ood = sum(data_ood.values())
         freqs_id = np.zeros(top_n)
@@ -126,7 +169,11 @@ def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=Fa
 
         for i, key in enumerate(sorted_keys):
             freqs_id[i] = data_id.get(key, 0) / total_orig
-            freqs_ood[i] = data_ood.get(key, 0) / total_ood
+
+            try:
+                freqs_ood[i] = data_ood.get(key, 0) / total_ood
+            except ZeroDivisionError:
+                freqs_ood[i] = 0
 
         ax[ax_num].bar(
             x - bar_width / 2,
@@ -151,7 +198,7 @@ def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=Fa
             alpha=0.7,
         )
         ax[ax_num].title.set_text(DISPLAY_NAMES[dataset_name])
-        ax[ax_num].set_xticklabels([])
+        # ax[ax_num].set_xticklabels([])
         # if sort:
         #    ax[ax_num].set_xticklabels(range(top_n + 5, 0, -5))
 
@@ -171,7 +218,7 @@ def create_id_ood_plot(dataset_names, data, x_label, target, top_n=None, sort=Fa
 
 
 def create_subsampled_plot(
-    dataset_names, data, x_label, target, top_n=None, sort=False
+    dataset_names, data, x_label, target, top_n=None, sort=False, text_labels=False
 ):
 
     fig, ax = plt.subplots(figsize=(10, 5), ncols=len(dataset_names), sharey="row")
@@ -217,6 +264,16 @@ def create_subsampled_plot(
         else:
             sorted_keys = np.arange(top_n)
 
+        if text_labels:
+            plt.sca(ax[ax_num])
+            plt.xticks(x, sorted_keys, fontsize=8, alpha=0.7)
+            plt.setp(
+                ax[ax_num].get_xticklabels(),
+                rotation=50,
+                ha="right",
+                rotation_mode="anchor",
+            )
+
         total_orig = sum(data_original.values())
 
         freqs_subsampled = {
@@ -232,12 +289,15 @@ def create_subsampled_plot(
             freqs_id[i] = data_original.get(key, 0) / total_orig
 
             for target_size in target_sizes:
-                freqs_subsampled[target_size][i] = (
-                    data[dataset_name]["subsampled"][target_size][
-                        f"sampled_{target}"
-                    ].get(key, 0)
-                    / total_subsampled[target_size]
-                )
+                try:
+                    freqs_subsampled[target_size][i] = (
+                        data[dataset_name]["subsampled"][target_size][
+                            f"sampled_{target}"
+                        ].get(key, 0)
+                        / total_subsampled[target_size]
+                    )
+                except ZeroDivisionError:
+                    freqs_subsampled[target_size][i] = 0
 
         ax[ax_num].bar(
             x - bar_width,
@@ -265,7 +325,7 @@ def create_subsampled_plot(
             )
         ax[ax_num].title.set_text(DISPLAY_NAMES[dataset_name])
 
-        ax[ax_num].set_xticklabels([])
+        # ax[ax_num].set_xticklabels([])
         # ax[ax_num].set_xlim([0, top_n * len(TARGET_SIZES)])
 
         # if sort:
@@ -291,6 +351,14 @@ def create_subsampled_plot(
 
 if __name__ == "__main__":
     datasets = ["danplus", "finnish_ud", "clinc_plus"]
+    all_stop_words = [
+        list(map(lambda line: line.strip(), open(path, "r").readlines()))
+        for path in [
+            "scripts/danish_stopwords.txt",
+            "scripts/finnish_stopwords.txt",
+            "scripts/english_stopwords.txt",
+        ]
+    ]
     data = {
         dataset: {"subsampled": {target_size: {} for target_size in TARGET_SIZES}}
         for dataset in datasets
@@ -301,9 +369,16 @@ if __name__ == "__main__":
             data = pickle.load(pkl_file)
 
     else:
-        for dataset_name, builder, sampler_class, sampler_kwargs in zip(
+        for (
+            dataset_name,
+            builder_class,
+            stop_words,
+            sampler_class,
+            sampler_kwargs,
+        ) in zip(
             datasets,
             [DanPlusBuilder, FinnishUDBuilder, ClincPlusBuilder],
+            all_stop_words,
             [
                 TokenClassificationSampler,
                 TokenClassificationSampler,
@@ -316,15 +391,20 @@ if __name__ == "__main__":
             ],
         ):
 
-            orig_data = builder(
+            builder = builder_class(
                 data_dir=DATA_DIR, num_jobs=2, max_length=MAX_LENGTH
-            ).build(batch_size=BATCH_SIZE)
+            )
+            orig_data = builder.build(batch_size=BATCH_SIZE)
             (
                 orig_seq_freqs,
                 orig_token_freqs,
                 orig_label_freqs,
             ) = collect_sentence_length_and_class_dict(
-                orig_data["train"], ignore_tokens=IGNORE_TOKENS
+                orig_data["train"],
+                ignore_tokens=[-100] + builder.tokenizer.all_special_ids,
+                tokenizer=builder.tokenizer,
+                stop_words=stop_words,
+                label_encoder=builder.label_encoder,
             )
 
             data[dataset_name]["orig_seq_freqs"] = orig_seq_freqs
@@ -337,7 +417,11 @@ if __name__ == "__main__":
                 ood_token_freqs,
                 ood_label_freqs,
             ) = collect_sentence_length_and_class_dict(
-                orig_data["ood_test"], ignore_tokens=IGNORE_TOKENS
+                orig_data["ood_test"],
+                ignore_tokens=[-100] + builder.tokenizer.all_special_ids,
+                tokenizer=builder.tokenizer,
+                stop_words=stop_words,
+                label_encoder=builder.label_encoder,
             )
 
             data[dataset_name]["ood_seq_freqs"] = ood_seq_freqs
@@ -347,7 +431,7 @@ if __name__ == "__main__":
             del orig_data
 
             for target_size in TARGET_SIZES:
-                subsampled_data = builder(
+                subsampled_data = builder_class(
                     data_dir=DATA_DIR,
                     num_jobs=2,
                     max_length=MAX_LENGTH,
@@ -362,7 +446,11 @@ if __name__ == "__main__":
                     sampled_token_freqs,
                     sampled_label_freqs,
                 ) = collect_sentence_length_and_class_dict(
-                    subsampled_data["train"], ignore_tokens=IGNORE_TOKENS
+                    subsampled_data["train"],
+                    ignore_tokens=[-100] + builder.tokenizer.all_special_ids,
+                    tokenizer=builder.tokenizer,
+                    stop_words=stop_words,
+                    label_encoder=builder.label_encoder,
                 )
 
                 data[dataset_name]["subsampled"][target_size][
@@ -395,7 +483,13 @@ if __name__ == "__main__":
 
     # Top 25 type distributions ID / OOD for all languages side by side
     create_id_ood_plot(
-        datasets, data, x_label="Type Rank", target="token_freqs", top_n=25, sort=True
+        datasets,
+        data,
+        x_label="Type Rank",
+        target="token_freqs",
+        top_n=25,
+        sort=True,
+        text_labels=True,
     )
 
     # Label frequency comparisons between ID / OOD
@@ -405,7 +499,7 @@ if __name__ == "__main__":
         x_label="Label Rank",
         target="label_freqs",
         sort=True,
-        break_yaxis={"ylims": ((0, 0.4), (0.85, 1)), "hspace": 0.05},
+        text_labels=True,
     )
 
     # Relative frequency of labels for finnish / danish for original and subsampled
@@ -415,6 +509,7 @@ if __name__ == "__main__":
         x_label="Label Rank",
         target="label_freqs",
         sort=True,
+        text_labels=True
         # break_yaxis={"hspace": 0.05}
     )
 
@@ -430,5 +525,11 @@ if __name__ == "__main__":
 
     # Relative frequency of top 25 types for all languages for original and subsampled
     create_subsampled_plot(
-        datasets, data, x_label="Type Rank", target="token_freqs", top_n=20, sort=True
+        datasets,
+        data,
+        x_label="Type Rank",
+        target="token_freqs",
+        top_n=20,
+        sort=True,
+        text_labels=True,
     )

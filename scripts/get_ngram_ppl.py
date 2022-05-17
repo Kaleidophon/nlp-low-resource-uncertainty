@@ -35,7 +35,6 @@ TARGET_SIZES = [100, 250, 500, 1000]
 DATA_DIR = "../data/processed"
 MAX_LENGTH = 50
 BATCH_SIZE = 1
-IGNORE_TOKENS = [-100, 0, 1, 2, 3, 4]
 RESULTS_DIR = "./"
 
 
