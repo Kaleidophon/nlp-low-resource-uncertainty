@@ -23,6 +23,15 @@ parameters:
   time_dropout:
     min: 0.1
     max: 0.4
+  embedding_dropout:
+    min: 0.1
+    max: 0.4
+  lr:
+    min: 0.1
+    max: 0.5
+  weight_decay:
+    min: 0.0
+    max: 0.5
 early_terminate:
   type: hyperband
   min_iter: 8

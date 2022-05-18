@@ -31,6 +31,15 @@ parameters:
   posterior_rho_init:
     min: -8
     max: -2
+  weight_decay:
+    min: 0.0
+    max: 0.3
+  lr:
+    min: 0.1
+    max: 0.5
+  dropout:
+    min: 0.1
+    max: 0.4
 early_terminate:
   type: hyperband
   min_iter: 8

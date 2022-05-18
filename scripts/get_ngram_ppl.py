@@ -44,7 +44,7 @@ def get_srilm_perplexity(train_path: str, test_path: str) -> float:
     # Build n-gram counts and interpolation weights
     for i, path in enumerate(ngrams_paths):
         os.system(
-            f"{RELATIVE_SRILM_CMD_PATH}/ngram-count -text {train_path} -lm {path} -order {i+1} -gt1min 5"
+            f"{RELATIVE_SRILM_CMD_PATH}/ngram-count -text {train_path} -lm {path} -order {i+1} -gt1min 5 -ukndiscount"
         )
 
     # Get results

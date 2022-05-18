@@ -21,8 +21,9 @@ parameters:
     min: 0.85
     max: 0.99
   lr:
-    min: 0.1
-    max: 0.5
+    distribution: log_uniform_values
+    min: 0.00005
+    max: 0.01
   weight_decay:
     min: 0.0
     max: 0.5

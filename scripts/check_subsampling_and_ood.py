@@ -162,6 +162,10 @@ def create_id_ood_plot(
                 rotation_mode="anchor",
             )
 
+        else:
+            plt.sca(ax[ax_num])
+            plt.xticks(range(0, (top_n + 2) * 5 + 1, top_n), range(0, top_n + 1, 5))
+
         total_orig = sum(data_id.values())
         total_ood = sum(data_ood.values())
         freqs_id = np.zeros(top_n)
@@ -273,6 +277,10 @@ def create_subsampled_plot(
                 ha="right",
                 rotation_mode="anchor",
             )
+
+        else:
+            plt.sca(ax[ax_num])
+            plt.xticks(range(0, top_n * 5 + 1, top_n), range(0, top_n + 6, 5))
 
         total_orig = sum(data_original.values())
 
