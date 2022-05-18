@@ -64,9 +64,17 @@ def evaluate_uncertainty(
     # Initialize data structure that track stats
     scores = defaultdict(float)  # Final scores
     # Uncertainties for tokens and sequences (in-distribution)
-    id_uncertainties, id_seq_uncertainties = defaultdict(list), defaultdict(list)
+    id_uncertainties, id_seq_uncertainties, id_max_seq_uncertainties = (
+        defaultdict(list),
+        defaultdict(list),
+        defaultdict(list),
+    )
     # Uncertainties for tokens and sequences (out-of-distribution)
-    ood_uncertainties, ood_seq_uncertainties = defaultdict(list), defaultdict(list)
+    ood_uncertainties, ood_seq_uncertainties, ood_max_seq_uncertainties = (
+        defaultdict(list),
+        defaultdict(list),
+        defaultdict(list),
+    )
 
     # Initialize result df that will later be written to .csv
     columns = ["sentence", "labels", "predictions"] + model_uncertainty_metrics
@@ -74,9 +82,27 @@ def evaluate_uncertainty(
     sentence_i = 0
 
     # Get scores for both test splits
-    for split_name, eval_split, uncertainties, seq_uncertainties in [
-        ("id", id_eval_split, id_uncertainties, id_seq_uncertainties),
-        ("ood", ood_eval_split, ood_uncertainties, ood_seq_uncertainties),
+    for (
+        split_name,
+        eval_split,
+        uncertainties,
+        seq_uncertainties,
+        max_seq_uncertainties,
+    ) in [
+        (
+            "id",
+            id_eval_split,
+            id_uncertainties,
+            id_seq_uncertainties,
+            id_max_seq_uncertainties,
+        ),
+        (
+            "ood",
+            ood_eval_split,
+            ood_uncertainties,
+            ood_seq_uncertainties,
+            ood_max_seq_uncertainties,
+        ),
     ]:
         split_predictions = []  # Collect all predictions on this split
         split_labels = []  # Collect all labels on this split
@@ -189,11 +215,15 @@ def evaluate_uncertainty(
                     seq_uncertainty *= (
                         seq_batch_mask.int()
                     )  # Mask out all uninteresting tokens' uncertainties
+                    max_seq_uncertainty = seq_uncertainty.max(dim=1)[0]
                     seq_uncertainty = seq_uncertainty.mean(dim=1)
                     seq_uncertainty *= seq_len
                     seq_uncertainty /= seq_batch_mask.int().sum(dim=1)
                     seq_uncertainties[metric_name].append(
                         seq_uncertainty.detach().cpu().numpy()
+                    )
+                    max_seq_uncertainties[metric_name].append(
+                        max_seq_uncertainty.detach().cpu().numpy()
                     )
 
                     uncertainties[metric_name].append(
@@ -241,6 +271,13 @@ def evaluate_uncertainty(
                 scores[f"{split_name}_{metric_name}_kendalls_tau_token"] = kendalls_tau(
                     split_losses, uncertainties[metric_name]
                 )
+
+                max_seq_uncertainties[metric_name] = np.concatenate(
+                    max_seq_uncertainties[metric_name]
+                )
+                scores[
+                    f"{split_name}_{metric_name}_kendalls_tau_max_seq"
+                ] = kendalls_tau(split_seq_losses, max_seq_uncertainties[metric_name])
 
             seq_uncertainties[metric_name] = np.concatenate(
                 seq_uncertainties[metric_name]
