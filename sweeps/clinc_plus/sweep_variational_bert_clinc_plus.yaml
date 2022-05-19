@@ -21,8 +21,9 @@ parameters:
     min: 0.1
     max: 0.5
   lr:
-    min: 0.001
-    max: 0.1
+    distribution: log_uniform_values
+    min: 0.00005
+    max: 0.01
 early_terminate:
   type: hyperband
   min_iter: 4
