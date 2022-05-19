@@ -249,7 +249,7 @@ def run_experiments(
             id_eval_split=data_splits["test"],
             ood_eval_split=data_splits["ood_test"],
             tokenizer=dataset_builder.tokenizer,
-            predictions_path=f"{result_dir}/{model_name}_{run + 1}_{timestamp}_uncertainty",
+            predictions_path=f"{result_dir}/{dataset_name}_{model_name}_{run + 1}_{timestamp}_uncertainty",
         )
 
         for score_name, score in uncertainty_scores.items():
@@ -257,7 +257,7 @@ def run_experiments(
 
         # Save all scores in pickle file
         with open(
-            f"{result_dir}/{model_name}_{timestamp}_scores.pkl", "wb"
+            f"{result_dir}/{dataset_name}_{model_name}_{timestamp}_scores.pkl", "wb"
         ) as scores_path:
             pickle.dump(scores, scores_path)
 
