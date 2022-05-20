@@ -14,13 +14,13 @@ DANPLUS_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0.003834,
-        "lr": 0.3043,
+        "weight_decay": 0.001357,
+        "lr": 0.4931,
         "num_training_steps": 7480,
         "validation_interval": 136,
         # "early_stopping_pat": 10,
         "grad_clip": 10,
-        "init_weight": 0.399,  # Hacky way to include this for replication, this prob. won't be used anywhere else
+        "init_weight": 0.5848,  # Hacky way to include this for replication, this prob. won't be used anywhere else
         "optimizer_class": optim.SGD,
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
@@ -30,7 +30,7 @@ DANPLUS_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 350,
         "input_size": 650,
-        "dropout": 0.2826,
+        "dropout": 0.223,
         "vocab_size": 52000,
         "output_size": 20,
         "is_sequence_classifier": False,
@@ -39,13 +39,13 @@ DANPLUS_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0.003834,
-        "lr": 0.3043,
+        "weight_decay": 0.001357,
+        "lr": 0.4931,
         "num_training_steps": 7480,
         "validation_interval": 136,
         # "early_stopping_pat": 10,
         "grad_clip": 10,
-        "init_weight": 0.399,  # Hacky way to include this for replication, this prob. won't be used anywhere else
+        "init_weight": 0.5848,  # Hacky way to include this for replication, this prob. won't be used anywhere else
         "optimizer_class": optim.SGD,
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
@@ -55,7 +55,7 @@ DANPLUS_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 350,
         "input_size": 650,
-        "dropout": 0.2826,
+        "dropout": 0.223,
         "vocab_size": 52000,
         "output_size": 20,
         "ensemble_size": 10,
