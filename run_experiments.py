@@ -182,6 +182,12 @@ def run_experiments(
     """
     scores = defaultdict(list)
 
+    if training_size is not None:
+        identifier = f"{dataset_name}_{training_size}_{model_name}"
+
+    else:
+        identifier = f"{dataset_name}_{model_name}"
+
     np.random.seed(seed)
     torch.manual_seed(seed)
 
@@ -214,12 +220,11 @@ def run_experiments(
 
         # Patch the object's eval method with the one define at the top of this script
         # that also tracks uncertainty properties over the course of the training
-        training_size_string = f"{training_size}_" if training_size is not None else ""
         patched_eval_func = create_patched_eval(
             iid_data_split=data_splits["test"],
             ood_data_split=data_splits["ood_test"],
             tokenizer=dataset_builder.tokenizer,
-            logging_path=f"{result_dir}/{model_name}_{run+1}_{training_size_string}{timestamp}_stats.csv",
+            logging_path=f"{result_dir}/{identifier}_{run+1}_{timestamp}_stats.csv",
         )
         model.eval = types.MethodType(patched_eval_func, model)
 
@@ -249,7 +254,7 @@ def run_experiments(
             id_eval_split=data_splits["test"],
             ood_eval_split=data_splits["ood_test"],
             tokenizer=dataset_builder.tokenizer,
-            predictions_path=f"{result_dir}/{dataset_name}_{model_name}_{run + 1}_{timestamp}_uncertainty",
+            predictions_path=f"{result_dir}/{identifier}_{timestamp}_uncertainty",
         )
 
         for score_name, score in uncertainty_scores.items():
@@ -257,7 +262,7 @@ def run_experiments(
 
         # Save all scores in pickle file
         with open(
-            f"{result_dir}/{dataset_name}_{model_name}_{timestamp}_scores.pkl", "wb"
+            f"{result_dir}/{identifier}_{timestamp}_scores.pkl", "wb"
         ) as scores_path:
             pickle.dump(scores, scores_path)
 
@@ -272,7 +277,7 @@ def run_experiments(
                     reinit=True,
                     tags=[dataset_name, model_name, str(training_size)],
                     settings=wandb.Settings(start_method="fork"),
-                    group=f"{dataset_name} {model_name} {training_size}",
+                    group=identifier.replace("_", " "),
                 )
 
     # # Reset for potential next run
