@@ -211,7 +211,7 @@ def run_experiments(
     for run in range(runs):
 
         if wandb_run is not None:
-            wandb_run.name = f"{dataset_name}_{model_name}_{run+1}"
+            wandb_run.name = f"{identifier}_{run+1}"
             wandb_run.config.update(model_params)
 
         model = AVAILABLE_MODELS[model_name](
