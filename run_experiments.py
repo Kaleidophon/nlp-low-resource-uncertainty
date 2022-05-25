@@ -268,7 +268,7 @@ def run_experiments(
 
         # Add all info to Weights & Biases
         if wandb_run is not None:
-            wandb_run.log(**scores)
+            wandb_run.log(scores)
 
             if run < runs - 1:
                 wandb_run.finish()
