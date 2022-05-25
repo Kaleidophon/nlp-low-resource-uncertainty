@@ -268,7 +268,7 @@ def run_experiments(
 
         # Add all info to Weights & Biases
         if wandb_run is not None:
-            wandb_run.log({**task_scores, **uncertainty_scores})
+            wandb_run.log(**scores)
 
             if run < runs - 1:
                 wandb_run.finish()
@@ -338,12 +338,18 @@ if __name__ == "__main__":
     tracker = None
     wandb_run = None
 
+    if args.training_size is not None:
+        identifier = f"{args.dataset}_{args.training_size}_{args.model}"
+
+    else:
+        identifier = f"{args.dataset}_{args.model}"
+
     if args.wandb:
         wandb_run = wandb.init(
             project=PROJECT_NAME,
             tags=[args.dataset, args.model, str(args.training_size)],
             settings=wandb.Settings(start_method="fork"),
-            group=f"{args.dataset} {args.model} {args.training_size}",
+            group=identifier,
         )
 
     if args.track_emissions:

@@ -3,11 +3,22 @@ Perform qualitative analysis, where uncertainty estimates of different models ar
 """
 
 # STD
+import argparse
 from typing import List, Optional, Dict
 
 # EXT
 import matplotlib.pyplot as plt
 import numpy as np
+from nlp_uncertainty_zoo.config import AVAILABLE_MODELS
+
+# PROJECT
+from src.config import AVAILABLE_DATASETS
+
+# CONST
+SEED = 123456
+RESULT_DIR = "./results"
+MODEL_DIR = "./models"
+IMG_DIR = "./img"
 
 
 def plot_uncertainties_over_sequence(
@@ -79,6 +90,34 @@ def plot_uncertainties_over_sequence(
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        required=True,
+        choices=AVAILABLE_DATASETS.keys(),
+        help="Dataset to run experiments on.",
+    )
+    parser.add_argument(
+        "--models",
+        type=str,
+        required=True,
+        nargs="+",
+        choices=AVAILABLE_MODELS.keys(),
+    )
+    parser.add_argument("--training-size", type=int, default=None)
+    parser.add_argument("--result-dir", type=str, default=RESULT_DIR)
+    args = parser.parse_args()
+
+    # TODO: Find all the relevant results
+    # TODO: Aggregate results per model and metric
+    # TODO: Find most interesting sentences
+    # 1. Most uncertainty sentences
+    # 2. Sentences with biggest disagreements between models / metrics
+    # 3. Somehow biggest differences between mtrics
+
+    # TODO: Plot some of those below
+
     # TODO: Remove sooner or later
     dummy_colors = {
         "model 1 - metric A": "firebrick",
