@@ -12,6 +12,8 @@ import pickle
 
 # EXT
 from matplotlib import pyplot as plt
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
 from nlp_uncertainty_zoo.config import AVAILABLE_MODELS
 
 # PROJECT
@@ -44,6 +46,25 @@ METRIC_MARKERS = {
     "dempster_shafer": "P",
     "mutual_information": "X",
     "log_prob": "D",
+}
+METRIC_NAMES = {
+    "max_prob": "Max. Prob.",
+    "predictive_entropy": "Pred. Entropy",
+    "variance": "Variance",
+    "softmax_gap": "Softmax gap",
+    "dempster_shafer": "Dempster-Shafer",
+    "mutual_information": "Mutual Inf.",
+    "log_prob": "Log. Prob.",
+}
+MODEL_NAMES = {
+    "lstm": "LSTM",
+    "lstm_ensemble": "LSTM Ensemble",
+    "st_tau_lstm": "ST-tau LSTM",
+    "bayesian_lstm": "Bayesian LSTM",
+    "variational_lstm": "Variational LSTM",
+    "ddu_bert": "DDU Bert",
+    "variational_bert": "Variational Bert",
+    "sngp_bert": "SNGP Bert",
 }
 TRAINING_SIZE_SCALES = {"dan+": {1000: 8, 2000: 40, 4000: 80}}
 plt.style.use("science")
@@ -91,6 +112,35 @@ def plot_results(
     ax.set_ylabel(y_label, alpha=0.6)
     # ax.legend(labels=data_labels, handles=handles, loc="upper left")
     # ax.axvline(x=2.5, c="black")
+
+    # Create legend
+    legend_elements = [
+        # Add metrics
+        *[
+            Line2D(
+                [0],
+                [0],
+                markersize=10,
+                alpha=ALPHA,
+                markerfacecolor="black",
+                color="w",
+                label=METRIC_NAMES[metric],
+                marker=metric_markers[metric],
+            )
+            for metric in metrics
+        ],
+        *[
+            Patch(
+                facecolor=model_colors[model_name][1],
+                edgecolor=model_colors[model_name][0],
+                label=MODEL_NAMES[model_name],
+                alpha=ALPHA,
+            )
+            for model_name in data.keys()
+        ],
+    ]
+    ax.legend(handles=legend_elements, loc="upper right", ncol=2, fontsize=8)
+
     fig.tight_layout()
 
     plt.savefig(save_path, format="pdf", dpi=300, bbox_inches="tight")
