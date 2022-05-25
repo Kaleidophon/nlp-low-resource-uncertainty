@@ -349,7 +349,7 @@ if __name__ == "__main__":
             project=PROJECT_NAME,
             tags=[args.dataset, args.model, str(args.training_size)],
             settings=wandb.Settings(start_method="fork"),
-            group=identifier,
+            group=identifier.replace("_", " "),
         )
 
     if args.track_emissions:
