@@ -234,7 +234,9 @@ def run_experiments(
             wandb_run.config.update(model_params)
 
         model = AVAILABLE_MODELS[model_name](
-            model_params, model_dir=model_dir, device=device
+            model_params,
+            model_dir=f"{model_dir}/{dataset_name}/{training_size}",
+            device=device,
         )
 
         # Patch the object's eval method with the one define at the top of this script
