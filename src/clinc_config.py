@@ -170,7 +170,7 @@ CLINC_MODEL_PARAMS = {
         "sequence_length": 128,
         "lr": 0.000468,
         "length_scale": 2,
-        "weight_decay": 0.3488,
+        "weight_decay": 0.03488,
         "num_training_steps": 8500,
         "validation_interval": 425,
         "scheduler_class": transformers.get_linear_schedule_with_warmup,

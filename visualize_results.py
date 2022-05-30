@@ -14,6 +14,7 @@ import pickle
 from matplotlib import pyplot as plt
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
+import numpy as np
 from nlp_uncertainty_zoo.config import AVAILABLE_MODELS
 
 # PROJECT
@@ -46,6 +47,9 @@ METRIC_MARKERS = {
     "dempster_shafer": "P",
     "mutual_information": "X",
     "log_prob": "D",
+    "ece": "2",
+    "ace": "3",
+    "sce": "4",
 }
 METRIC_NAMES = {
     "max_prob": "Max. Prob.",
@@ -55,6 +59,9 @@ METRIC_NAMES = {
     "dempster_shafer": "Dempster-Shafer",
     "mutual_information": "Mutual Inf.",
     "log_prob": "Log. Prob.",
+    "ece": "ECE",
+    "sce": "SCE",
+    "ace": "ACE",
 }
 MODEL_NAMES = {
     "lstm": "LSTM",
@@ -66,7 +73,7 @@ MODEL_NAMES = {
     "variational_bert": "Variational Bert",
     "sngp_bert": "SNGP Bert",
 }
-TRAINING_SIZE_SCALES = {"dan+": {1000: 8, 2000: 40, 4000: 80}}
+TRAINING_SIZE_SCALES = {"dan+": {1000: 16, 2000: 60, 4000: 100}}
 plt.style.use("science")
 
 
@@ -75,8 +82,11 @@ def plot_results(
     x_label: str,
     y_label: str,
     metric_prefix: str,
+    metric_postfix: str,
     metrics: List[str],
     data,
+    plot_ood=False,
+    legend_loc: str = "upper right",
     save_path: Optional[str] = None,
     model_colors: Dict[str, Tuple[str, str]] = MODEL_COLORS,
     metric_markers: Dict[str, str] = METRIC_MARKERS,
@@ -91,7 +101,16 @@ def plot_results(
             for metric in metrics:
                 edge_color, color = model_colors[model]
                 target_x = data[model][training_size][x_axis]
-                target_y = data[model][training_size][metric_prefix + metric]
+
+                if not plot_ood:
+                    target_y = data[model][training_size][
+                        metric_prefix + metric + metric_postfix
+                    ]
+
+                else:
+                    target_y = data[model][training_size][
+                        "id_" + metric_prefix + metric + metric_postfix
+                    ]
 
                 if len(target_x) != len(target_y):
                     continue
@@ -105,6 +124,34 @@ def plot_results(
                     alpha=ALPHA,
                     s=size_scales[training_size],
                 )
+
+                if plot_ood:
+                    ood_target_y = data[model][training_size][
+                        "ood_" + metric_prefix + metric + metric_postfix
+                    ]
+
+                    plt.scatter(
+                        target_x,
+                        ood_target_y,
+                        marker=metric_markers[metric],
+                        color=color,
+                        edgecolor=edge_color,
+                        alpha=ALPHA,
+                        s=size_scales[training_size],
+                    )
+
+                    # Draw arrow
+                    # TODO: Adjust x position
+                    for x, y, new_y in zip(target_x, target_y, ood_target_y):
+                        plt.arrow(
+                            x,
+                            y,
+                            0,
+                            new_y - y,
+                            alpha=ALPHA + 0.1,
+                            color=edge_color,
+                            width=0.00005 * np.sqrt(size_scales[training_size]),
+                        )
 
     # ax.set_xlim([0, 1])
     # ax.set_ylim([0, 1])
@@ -129,6 +176,7 @@ def plot_results(
             )
             for metric in metrics
         ],
+        # Add models
         *[
             Patch(
                 facecolor=model_colors[model_name][1],
@@ -138,24 +186,26 @@ def plot_results(
             )
             for model_name in data.keys()
         ],
+        # Add training sizes
+        *[
+            Line2D(
+                [0],
+                [0],
+                markersize=np.sqrt(scale),
+                alpha=ALPHA,
+                markerfacecolor="black",
+                color="w",
+                label=size,
+                marker="o",
+            )
+            for size, scale in size_scales.items()
+        ],
     ]
-    ax.legend(handles=legend_elements, loc="upper right", ncol=2, fontsize=8)
+    ax.legend(handles=legend_elements, loc=legend_loc, ncol=2, fontsize=8)
 
     fig.tight_layout()
 
     plt.savefig(save_path, format="pdf", dpi=300, bbox_inches="tight")
-
-
-def plot_results_id_ood(
-    x_axis: str,
-    metrics: List[str],
-    data,
-    save_path: Optional[str] = None,
-    model_colors: Dict[str, Tuple[str, str]] = MODEL_COLORS,
-    metric_markers: Dict[str, str] = METRIC_MARKERS,
-    size_scales: Optional[Dict[int, float]] = None,
-):
-    pass
 
 
 if __name__ == "__main__":
@@ -221,8 +271,9 @@ if __name__ == "__main__":
     # Create plots
     plot_results(
         x_axis="macro_f1_scores",
-        metrics=found_metrics,
+        metrics=list(found_metrics),
         metric_prefix="auroc_",
+        metric_postfix="",
         x_label="Macro F1 score",
         y_label="ID / OOD AUROC",
         data=data,
@@ -230,36 +281,56 @@ if __name__ == "__main__":
         size_scales=TRAINING_SIZE_SCALES[args.dataset],
     )
 
-    import sys
-
-    sys.exit(0)
-
     plot_results(
-        x_axis="macro_f1",
-        metrics=[f"aupr_{metric_name}" for metric_name in found_metrics],
+        x_axis="macro_f1_scores",
+        metrics=list(found_metrics),
+        metric_prefix="aupr_",
+        metric_postfix="",
+        x_label="Macro F1 score",
+        y_label="ID / OOD AUPR",
         data=data,
         save_path=f"{IMG_DIR}/scatter_aupr.pdf",
+        size_scales=TRAINING_SIZE_SCALES[args.dataset],
     )
 
     # Create ID / OOD plots
     # TODO: Check for the kind of dataset
+    # TODO: Use new OOD test scares when available
     plot_results(
         x_axis="macro_f1_scores",
-        metrics=[f"{metric_name}_kendalls_tau_token" for metric_name in found_metrics],
+        metric_prefix="",
+        metric_postfix="_kendalls_tau_token",
+        metrics=found_metrics,
+        x_label="Macro F1 score",
+        y_label="Token-level Kendall's tau",
         data=data,
+        plot_ood=True,
         save_path=f"{IMG_DIR}/scatter_kendalls_tau_token.pdf",
+        size_scales=TRAINING_SIZE_SCALES[args.dataset],
+        legend_loc="lower right",
     )
+
     plot_results(
-        x_axis="macro_f1",
-        metrics=[f"{metric_name}_kendalls_tau_seq" for metric_name in found_metrics],
+        x_axis="macro_f1_scores",
+        metric_prefix="",
+        metric_postfix="_kendalls_tau_seq",
+        metrics=list(found_metrics),
+        x_label="Macro F1 score",
+        y_label="Sequence-level Kendall's tau",
         data=data,
+        plot_ood=True,
         save_path=f"{IMG_DIR}/scatter_kendalls_tau_seq.pdf",
+        size_scales=TRAINING_SIZE_SCALES[args.dataset],
     )
     plot_results(
-        x_axis="macro_f1",
-        metrics=[
-            f"{metric_name}_kendalls_tau_seq_max" for metric_name in found_metrics
-        ],
+        x_axis="macro_f1_scores",
+        metric_prefix="",
+        metric_postfix="_kendalls_tau_max_seq",
+        metrics=list(found_metrics),
+        x_label="Macro F1 score",
+        y_label="Sequence-level Kendall's tau (max)",
         data=data,
+        plot_ood=True,
         save_path=f"{IMG_DIR}/scatter_kendalls_tau_seq_max.pdf",
+        size_scales=TRAINING_SIZE_SCALES[args.dataset],
     )

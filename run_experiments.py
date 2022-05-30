@@ -109,21 +109,40 @@ def create_patched_eval(
             loss += batch_loss.detach().cpu()
 
         # Also track uncertainty performance and calibration over time
-        scores = evaluate_uncertainty(self, iid_data_split, ood_data_split, tokenizer)
+        uncertainty_scores = evaluate_uncertainty(
+            self, iid_data_split, ood_data_split, tokenizer
+        )
+        task_scores = evaluate(
+            self,
+            eval_split=iid_data_split,
+            tokenizer=tokenizer,
+        )
+        task_scores = {f"val_{metric}": value for metric, value in task_scores.items()}
 
         if wandb_run is not None:
-            wandb_run.log(scores)
+            wandb_run.log({**task_scores, **uncertainty_scores})
 
         with open(logging_path, "a") as logging_file:
             global HEADER_ADDED, BATCH_NUM
             BATCH_NUM += self.model_params["validation_interval"]
 
             if not HEADER_ADDED:
-                logging_file.write("\t".join(["batch_num"] + list(scores.keys())))
+                logging_file.write(
+                    "\t".join(
+                        ["batch_num"]
+                        + list(task_scores.keys())
+                        + list(uncertainty_scores.keys())
+                    )
+                )
                 HEADER_ADDED = True
 
             score_string = "\t".join(
-                [str(BATCH_NUM)] + [f"{score:.4f}" for score in scores.values()]
+                [str(BATCH_NUM)]
+                + [
+                    f"{score:.4f}"
+                    for score in list(task_scores.values())
+                    + list(uncertainty_scores.values())
+                ]
             )
             score_string += "\n"
             logging_file.write(score_string)
@@ -244,8 +263,18 @@ def run_experiments(
             eval_split=data_splits["test"],
             tokenizer=dataset_builder.tokenizer,
         )
+        ood_task_scores = evaluate(
+            model,
+            eval_split=data_splits["ood_test"],
+            tokenizer=dataset_builder.tokenizer,
+        )
+        ood_task_scores = {
+            f"ood_{metric}": value for metric, value in ood_task_scores.items()
+        }
 
-        for score_name, score in task_scores.items():
+        for score_name, score in list(task_scores.items()) + list(
+            ood_task_scores.items()
+        ):
             scores[score_name].append(score)
 
         # Evaluate uncertainty experiments
@@ -295,7 +324,8 @@ def run_experiments(
             "runs": runs,
             "scores": {
                 f"{score_name}_total": f"{np.mean(scores):.4f} ±{np.std(scores):.2f}"
-                for score_name, scores in scores.items()
+                for score_name, scores in scores.items()[:25]
+                # Restrict to 25 items to avoid crashing telegram api with messages that exceed 50 MB
             },
             "url": wandb.run.get_url(),
         },
