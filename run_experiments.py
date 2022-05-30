@@ -326,7 +326,7 @@ def run_experiments(
             "runs": runs,
             "scores": {
                 f"{score_name}_total": f"{np.mean(scores):.4f} ±{np.std(scores):.2f}"
-                for score_name, scores in scores.items()[:25]
+                for score_name, scores in list(scores.items())[:25]
                 # Restrict to 25 items to avoid crashing telegram api with messages that exceed 50 MB
             },
             "url": wandb.run.get_url(),
