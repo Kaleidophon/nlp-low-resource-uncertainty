@@ -4,12 +4,15 @@ Perform qualitative analysis, where uncertainty estimates of different models ar
 
 # STD
 import argparse
+import os
+import re
 from typing import List, Optional, Dict
 
 # EXT
 import matplotlib.pyplot as plt
 import numpy as np
 from nlp_uncertainty_zoo.config import AVAILABLE_MODELS
+import pandas as pd
 
 # PROJECT
 from src.config import AVAILABLE_DATASETS
@@ -101,20 +104,76 @@ if __name__ == "__main__":
     parser.add_argument(
         "--models",
         type=str,
-        required=True,
+        default=AVAILABLE_MODELS.keys(),
         nargs="+",
         choices=AVAILABLE_MODELS.keys(),
     )
-    parser.add_argument("--training-size", type=int, default=None)
+    parser.add_argument("--training-sizes", type=int, nargs="+", default=tuple())
     parser.add_argument("--result-dir", type=str, default=RESULT_DIR)
+    parser.add_argument("--output-dir", type=str, default=IMG_DIR)
     args = parser.parse_args()
 
-    # TODO: Find all the relevant results
-    # TODO: Aggregate results per model and metric
-    # TODO: Find most interesting sentences
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
+    # Filter irrelevant files
+    # Retrieve score files that fit description
+    def is_match(
+        path: str, data_set: str, models: List[str], training_sizes: List[int]
+    ) -> bool:
+        if data_set not in path:
+            return False
+
+        if not any([f"_{model}_" in path for model in models]):
+            return False
+
+        if not any([f"_{training_size}_" in path for training_size in training_sizes]):
+            return False
+
+        if not path.endswith("_uncertainty.csv"):
+            return False
+
+        return True
+
+    result_paths = os.listdir(args.result_dir)
+    result_paths = list(
+        filter(
+            lambda path: is_match(path, args.dataset, args.models, args.training_sizes),
+            result_paths,
+        )
+    )
+
+    # Load data
+    all_data = None
+
+    for path in result_paths:
+        _, training_size, model_name = (
+            re.compile(r"(.+?)_(\d+)_(.+)_\d{2}-\d{2}-\d{4}").match(path).groups()
+        )
+        training_size = int(training_size)
+
+        data = pd.read_csv(f"{args.result_dir}/{path}", delimiter="\t")
+        data = data.drop(columns=["Unnamed: 0"])
+
+        # Rename columns with uncertainty metric values to make joining tables easier
+        data = data.rename(
+            columns=lambda col: f"{model_name}_{training_size}_{col}"
+            if col not in ["sentence", "labels"]
+            else col
+        )
+
+        # Join data
+        if all_data is None:
+            all_data = data
+
+        else:
+            # Remove these columns before joining to avoid duplication
+            data = data.drop(columns=["sentence", "labels"])
+            all_data = all_data.join(data)
+
     # 1. Most uncertainty sentences
     # 2. Sentences with biggest disagreements between models / metrics
-    # 3. Somehow biggest differences between mtrics
+    # 3. Somehow biggest differences between metrics
 
     # TODO: Plot some of those below
 
