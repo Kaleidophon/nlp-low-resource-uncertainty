@@ -34,10 +34,10 @@ MODEL_COLORS = {
     "lstm_ensemble": ("forestgreen", "yellowgreen"),
     "st_tau_lstm": ("midnightblue", "skyblue"),
     "bayesian_lstm": ("orangered", "lightsalmon"),
-    "variational_lstm": ...,
-    "ddu_bert": ...,
-    "variational_bert": ...,
-    "sngp_bert": ...,
+    "variational_lstm": ("darkmagenta", "orchid"),
+    "ddu_bert": ("lightseagreen", "mediumturquoise"),
+    "variational_bert": ("gold", "lemonchiffon"),
+    "sngp_bert": ("dimgray", "silver"),
 }
 METRIC_MARKERS = {
     "max_prob": "o",

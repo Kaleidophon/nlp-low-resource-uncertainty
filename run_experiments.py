@@ -68,6 +68,10 @@ def create_patched_eval(
     and OOD test set over time.
 
     """
+    global HEADER_ADDED, BATCH_NUM
+    BATCH_NUM = 0  # Reset global batch number
+    HEADER_ADDED = False  # Make sure header is added to every file
+
     if os.path.exists(logging_path):
         os.remove(logging_path)
 
@@ -133,6 +137,7 @@ def create_patched_eval(
                         + list(task_scores.keys())
                         + list(uncertainty_scores.keys())
                     )
+                    + "\n"
                 )
                 HEADER_ADDED = True
 
@@ -285,7 +290,7 @@ def run_experiments(
             id_eval_split=data_splits["test"],
             ood_eval_split=data_splits["ood_test"],
             tokenizer=dataset_builder.tokenizer,
-            predictions_path=f"{result_dir}/{identifier}_{timestamp}_uncertainty",
+            predictions_path=f"{result_dir}/{identifier}_{run+1}_{timestamp}_uncertainty",
         )
 
         for score_name, score in uncertainty_scores.items():
@@ -293,7 +298,7 @@ def run_experiments(
 
         # Save all scores in pickle file
         with open(
-            f"{result_dir}/{identifier}_{timestamp}_scores.pkl", "wb"
+            f"{result_dir}/{identifier}_{run+1}_{timestamp}_scores.pkl", "wb"
         ) as scores_path:
             pickle.dump(scores, scores_path)
 
@@ -329,7 +334,7 @@ def run_experiments(
                 for score_name, scores in list(scores.items())[:25]
                 # Restrict to 25 items to avoid crashing telegram api with messages that exceed 50 MB
             },
-            "url": wandb.run.get_url(),
+            "url": wandb.run.get_url() if wandb_run is not None else "",
         },
         indent=4,
         ensure_ascii=False,

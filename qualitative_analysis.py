@@ -22,6 +22,53 @@ SEED = 123456
 RESULT_DIR = "./results"
 MODEL_DIR = "./models"
 IMG_DIR = "./img"
+TOP_N = 10
+
+# Plotting
+MODEL_COLORS = {
+    "lstm": ("firebrick", "lightcoral"),
+    "lstm_ensemble": ("forestgreen", "yellowgreen"),
+    "st_tau_lstm": ("midnightblue", "skyblue"),
+    "bayesian_lstm": ("orangered", "lightsalmon"),
+    "variational_lstm": ("darkmagenta", "orchid"),
+    "ddu_bert": ("lightseagreen", "mediumturquoise"),
+    "variational_bert": ("gold", "lemonchiffon"),
+    "sngp_bert": ("dimgray", "silver"),
+}
+METRIC_MARKERS = {
+    "max_prob": "o",
+    "predictive_entropy": "^",
+    "variance": "s",
+    "softmax_gap": "p",
+    "dempster_shafer": "P",
+    "mutual_information": "X",
+    "log_prob": "D",
+    "ece": "2",
+    "ace": "3",
+    "sce": "4",
+}
+METRIC_NAMES = {
+    "max_prob": "Max. Prob.",
+    "predictive_entropy": "Pred. Entropy",
+    "variance": "Variance",
+    "softmax_gap": "Softmax gap",
+    "dempster_shafer": "Dempster-Shafer",
+    "mutual_information": "Mutual Inf.",
+    "log_prob": "Log. Prob.",
+    "ece": "ECE",
+    "sce": "SCE",
+    "ace": "ACE",
+}
+MODEL_NAMES = {
+    "lstm": "LSTM",
+    "lstm_ensemble": "LSTM Ensemble",
+    "st_tau_lstm": "ST-tau LSTM",
+    "bayesian_lstm": "Bayesian LSTM",
+    "variational_lstm": "Variational LSTM",
+    "ddu_bert": "DDU Bert",
+    "variational_bert": "Variational Bert",
+    "sngp_bert": "SNGP Bert",
+}
 
 
 def plot_uncertainties_over_sequence(
@@ -111,6 +158,9 @@ if __name__ == "__main__":
     parser.add_argument("--training-sizes", type=int, nargs="+", default=tuple())
     parser.add_argument("--result-dir", type=str, default=RESULT_DIR)
     parser.add_argument("--output-dir", type=str, default=IMG_DIR)
+    parser.add_argument(
+        "--top-n", type=str, default=TOP_N, help="Top n samples to plot per analysis."
+    )
     args = parser.parse_args()
 
     if not os.path.exists(args.output_dir):
@@ -147,8 +197,8 @@ if __name__ == "__main__":
     all_data = None
 
     for path in result_paths:
-        _, training_size, model_name = (
-            re.compile(r"(.+?)_(\d+)_(.+)_\d{2}-\d{2}-\d{4}").match(path).groups()
+        _, training_size, model_name, run = (
+            re.compile(r"(.+?)_(\d+)_(.+)_(\d)_\d{2}-\d{2}-\d{4}").match(path).groups()
         )
         training_size = int(training_size)
 
@@ -157,7 +207,7 @@ if __name__ == "__main__":
 
         # Rename columns with uncertainty metric values to make joining tables easier
         data = data.rename(
-            columns=lambda col: f"{model_name}_{training_size}_{col}"
+            columns=lambda col: f"{model_name}_{training_size}_{run}_{col}"
             if col not in ["sentence", "labels"]
             else col
         )
@@ -171,12 +221,22 @@ if __name__ == "__main__":
             data = data.drop(columns=["sentence", "labels"])
             all_data = all_data.join(data)
 
-    # 1. Most uncertainty sentences
+    # Create additional statistics
+    for index, row in all_data.iterrows():
+        ...
+
+    # 1. Most uncertain sentences
+    # TODO: Max mean across metrics
+
+    # 1. Least uncertain sentences
+    # TODO: Min mean across metrics
+
     # 2. Sentences with biggest disagreements between models / metrics
+    # TODO: Max variance across metrics
+
     # 3. Somehow biggest differences between metrics
 
     # TODO: Plot some of those below
-
     # TODO: Remove sooner or later
     dummy_colors = {
         "model 1 - metric A": "firebrick",
