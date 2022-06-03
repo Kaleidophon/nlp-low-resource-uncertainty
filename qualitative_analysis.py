@@ -4,12 +4,16 @@ Perform qualitative analysis, where uncertainty estimates of different models ar
 
 # STD
 import argparse
+from collections import defaultdict
+import itertools
 import os
 import re
 from typing import List, Optional, Dict
 
 # EXT
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
 import numpy as np
 from nlp_uncertainty_zoo.config import AVAILABLE_MODELS
 import pandas as pd
@@ -21,8 +25,10 @@ from src.config import AVAILABLE_DATASETS
 SEED = 123456
 RESULT_DIR = "./results"
 MODEL_DIR = "./models"
-IMG_DIR = "./img"
+IMG_DIR = "./img/qualitative"
 TOP_N = 10
+ALPHA = 0.6
+DATA_DIR = "data/processed"
 
 # Plotting
 MODEL_COLORS = {
@@ -85,8 +91,13 @@ def plot_uncertainties_over_sequence(
     ax.grid(visible=True, axis="both", which="major", linestyle=":", color="grey")
 
     x = np.arange(0, list(uncertainties.values())[0].shape[1])
+    models, metrics = set(), set()
 
     for name, data in uncertainties.items():
+
+        model, metric = re.compile(r"(.+?) \d+ - (.+)").match(name).groups()
+        models.add(model)
+        metrics.add(metric)
 
         if normalize:
             flattened_data = data.flatten()
@@ -96,10 +107,10 @@ def plot_uncertainties_over_sequence(
         ax.plot(
             data.mean(axis=0),
             label=name,
-            marker=markers[name],
-            color=colors[name],
+            marker=markers[metric],
+            markersize=6,
+            color=colors[model][0],
             alpha=0.8,
-            markersize=12,
         )
 
         # Plot +/- standard deviation
@@ -107,12 +118,11 @@ def plot_uncertainties_over_sequence(
             x=x,
             y1=data.mean(axis=0) + data.std(axis=0),
             y2=data.mean(axis=0) - data.std(axis=0),
-            color=colors[name],
+            color=colors[model][1],
             alpha=0.2,
         )
 
     ax.set_ylabel("Uncertainty", alpha=0.6)
-    ax.legend(loc="upper right")
 
     # Set xticks
     if labels is not None:
@@ -124,6 +134,34 @@ def plot_uncertainties_over_sequence(
     plt.xticks(x, xticks, fontsize=12)
     ax.yaxis.set_ticklabels([])
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+
+    legend_elements = [
+        # Add metrics
+        *[
+            Line2D(
+                [0],
+                [0],
+                markersize=10,
+                alpha=ALPHA,
+                markerfacecolor="black",
+                color="w",
+                label=METRIC_NAMES[metric],
+                marker=markers[metric],
+            )
+            for metric in metrics
+        ],
+        # Add models
+        *[
+            Patch(
+                facecolor=colors[model_name][1],
+                edgecolor=colors[model_name][0],
+                label=MODEL_NAMES[model_name],
+                alpha=ALPHA,
+            )
+            for model_name in models
+        ],
+    ]
+    ax.legend(handles=legend_elements, loc="upper right", ncol=2, fontsize=8)
 
     fig.tight_layout()
 
@@ -195,6 +233,8 @@ if __name__ == "__main__":
 
     # Load data
     all_data = None
+    models2sizes = defaultdict(list)
+    models2metrics = defaultdict(list)
 
     for path in result_paths:
         _, training_size, model_name, run = (
@@ -204,6 +244,14 @@ if __name__ == "__main__":
 
         data = pd.read_csv(f"{args.result_dir}/{path}", delimiter="\t")
         data = data.drop(columns=["Unnamed: 0"])
+
+        # Gather info about available results
+        models2sizes[model_name].append(training_size)
+        for column in data.columns:
+            if column in ["sentence", "labels", "predictions"]:
+                continue
+
+            models2metrics[model_name].append(column)
 
         # Rename columns with uncertainty metric values to make joining tables easier
         data = data.rename(
@@ -221,6 +269,45 @@ if __name__ == "__main__":
             data = data.drop(columns=["sentence", "labels"])
             all_data = all_data.join(data)
 
+    # Aggregate measurements across runs
+    aggregate_data = defaultdict(dict)
+
+    for model in models2metrics:
+        for metric, training_size in itertools.product(
+            models2metrics[model], models2sizes[model]
+        ):
+            # Find all columns corresponding to some model, training size and metric
+            run_columns = [
+                column
+                for column in all_data.columns
+                if re.match(fr"{model}_{training_size}_\d_{metric}", column)
+            ]
+
+            # Compute mean and std over all time steps over model runs
+            run_data = all_data[run_columns].applymap(
+                lambda cell: np.array(list(map(float, cell.split())))
+            )
+
+            for i, row in run_data.iterrows():
+                combined_data = np.stack(row.values)
+                aggregate_data[i][f"{model} {training_size} - {metric}"] = combined_data
+
+            # Assign means and standard deviations to data
+            # aggregate_data[f"{model} {training_size} - {metric}"] = ...
+            """
+            # Compute mean and std over all time steps over model runs
+            run_data = all_data[run_columns].applymap(lambda cell: np.array(list(map(float, cell.split()))))
+            column_means = run_data.apply(lambda cells: cells.mean(), axis=1)
+            run_data = run_data.apply(lambda series: (series - column_means) ** 2)
+            column_stds = run_data.apply(lambda cells: cells.mean(), axis=1)
+            column_stds = column_stds.apply(lambda arr: np.sqrt(arr))
+
+            # Assign means and standard deviations to data
+            aggregate_data[f"{model} {training_size} - {metric}_mean"] = column_means
+            aggregate_data[f"{model} {training_size} - {metric}_std"] = column_stds
+            """
+
+    """
     # Create additional statistics
     for index, row in all_data.iterrows():
         ...
@@ -235,38 +322,38 @@ if __name__ == "__main__":
     # TODO: Max variance across metrics
 
     # 3. Somehow biggest differences between metrics
+    """
 
-    # TODO: Plot some of those below
-    # TODO: Remove sooner or later
-    dummy_colors = {
-        "model 1 - metric A": "firebrick",
-        "model 1 - metric B": "firebrick",
-        "model 2 - metric A": "forestgreen",
-    }
-    dummy_markers = {
-        "model 1 - metric A": "o",
-        "model 1 - metric B": "^",
-        "model 2 - metric A": "o",
-    }
-    dummy_sentence = "De slår løs på kvinder , ' sagde Eduardas Potashinskas .".split(
-        " "
+    # Sample indices
+    sampled_indices = np.random.choice(range(0, len(all_data)), args.top_n)
+    dataset_builder = AVAILABLE_DATASETS[args.dataset](
+        data_dir=DATA_DIR,
+        max_length=35,
     )
-    dummy_labels = "O O O O O O O O B-PER I-PER O".split(" ")
+    data_splits = dataset_builder.build(batch_size=32, drop_last=True)
+    tokenizer = dataset_builder.tokenizer
+    label_encoder = dataset_builder.label_encoder
+    del dataset_builder, data_splits
 
-    dummy_uncertainties = {
-        "model 1 - metric A": np.cos(np.arange(0, 11, 1))
-        * np.random.normal(0, 0.4, size=(5, 11)),
-        "model 1 - metric B": np.sin(np.arange(0, 11, 1))
-        * np.random.normal(0.3, 0.2, size=(5, 11)),
-        "model 2 - metric A": np.cos(np.arange(0, 11, 1))
-        * np.random.normal(-0.1, 0.8, size=(5, 11)),
-    }
+    if not os.path.exists(f"{IMG_DIR}/{args.dataset}"):
+        os.makedirs(f"{IMG_DIR}/{args.dataset}")
 
-    plot_uncertainties_over_sequence(
-        uncertainties=dummy_uncertainties,
-        sentence=dummy_sentence,
-        labels=dummy_labels,
-        colors=dummy_colors,
-        markers=dummy_markers,
-        normalize=False,
-    )
+    for idx in sampled_indices:
+        uncertainties = aggregate_data[idx]
+        labels = list(map(int, all_data.loc[idx, "labels"].split()))
+        labels = [
+            label_encoder.inverse_transform([label])[0] if label != -100 else -100
+            for label in labels
+        ]
+        sentence = all_data.loc[idx, "sentence"]
+        sentence = tokenizer.tokenize(sentence)
+
+        plot_uncertainties_over_sequence(
+            uncertainties=uncertainties,
+            sentence=sentence,
+            labels=labels,
+            colors=MODEL_COLORS,
+            markers=METRIC_MARKERS,
+            normalize=True,
+            save_path=f"{IMG_DIR}/{args.dataset}/{idx}.pdf",
+        )
