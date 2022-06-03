@@ -115,6 +115,8 @@ def plot_results(
                 if len(target_x) != len(target_y):
                     continue
 
+                # TODO: Only plot mean over runs
+
                 plt.scatter(
                     target_x,
                     target_y,
@@ -249,6 +251,8 @@ if __name__ == "__main__":
     # Map from model to training size to ID / OOD to metric
     data = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     found_metrics = set()
+
+    # TODO: Potentially split by LSTM / transformers
 
     for result_path in result_paths:
         _, training_size, model_name = (

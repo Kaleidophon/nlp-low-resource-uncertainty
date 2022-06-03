@@ -123,7 +123,8 @@ def evaluate_uncertainty(
                 batch_size, seq_len = labels.shape[0], 1
 
             # Get predictions
-            predictions = model.predict(input_ids, attention_mask=attention_mask)
+            with torch.no_grad():
+                predictions = model.predict(input_ids, attention_mask=attention_mask)
 
             # Save predictions and labels in DataFrame which will later be written to file
             if predictions_path is not None:
@@ -192,9 +193,12 @@ def evaluate_uncertainty(
             split_losses.append(losses.detach().cpu().numpy())
 
             for metric_name in model_uncertainty_metrics:
-                uncertainty = model.get_uncertainty(
-                    input_ids, metric_name=metric_name, attention_mask=attention_mask
-                )
+                with torch.no_grad():
+                    uncertainty = model.get_uncertainty(
+                        input_ids,
+                        metric_name=metric_name,
+                        attention_mask=attention_mask,
+                    )
 
                 if predictions_path is not None:
                     for batch_i in range(batch_size):
