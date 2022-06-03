@@ -65,7 +65,7 @@ CLINC_MODEL_PARAMS = {
         "sequence_length": 35,
         "early_stopping": True,
         "weight_decay": 0.001337,
-        "lr": 0.4712,
+        "lr": 0.1112,
         "num_training_steps": 23375,
         "validation_interval": 425,
         # "early_stopping_pat": 10,
