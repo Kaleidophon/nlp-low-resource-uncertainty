@@ -236,6 +236,7 @@ if __name__ == "__main__":
     models2sizes = defaultdict(list)
     models2metrics = defaultdict(list)
 
+    # TODO: This could be written more simply by avoiding pandas altogether
     for path in result_paths:
         _, training_size, model_name, run = (
             re.compile(r"(.+?)_(\d+)_(.+)_(\d)_\d{2}-\d{2}-\d{4}").match(path).groups()
