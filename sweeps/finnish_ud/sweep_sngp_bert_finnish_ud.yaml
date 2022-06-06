@@ -17,22 +17,24 @@ parameters:
     distribution: constant
     value: 30
   # Actual hyperparameter search params
-  ridge_factor:
-    min: 0.001
-    max: 0.005
   beta_length_scale:
     min: 0.5
     max: 2.5
-  gp_mean_field_factor:
-    min: 0.05
-    max: 0.4
+  kernel_amplitude:
+    distribution: log_uniform_values
+    min: 0.01
+    max: 1
+  weight_decay_beta:
+    distribution: log_uniform_values
+    min: 0.001
+    max: 0.5
   lr:
     distribution: log_uniform_values
     min: 0.00001
     max: 0.001
 early_terminate:
   type: hyperband
-  min_iter: 8
+  min_iter: 10000
 command:
   - python3
   - ${program}
