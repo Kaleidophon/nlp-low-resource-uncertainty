@@ -15,7 +15,7 @@ parameters:
     value: "cuda"
   # Actual hyperparameter search params
   num_centroids:
-    values: [10, 20, 30, 40]
+    values: [5, 10, 20, 30, 40]
   dropout:
     min: 0.1
     max: 0.4
@@ -24,7 +24,7 @@ parameters:
     max: 0.3
   lr:
     min: 0.1
-    max: 0.5
+    max: 1
 early_terminate:
   type: hyperband
   min_iter: 8
