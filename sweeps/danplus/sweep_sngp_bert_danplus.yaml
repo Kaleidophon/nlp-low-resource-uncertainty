@@ -20,18 +20,18 @@ parameters:
   beta_length_scale:
       min: 0.5
       max: 2.5
-    kernel_amplitude:
-      distribution: log_uniform_values
-      min: 0.01
-      max: 1
-    weight_decay_beta:
-      distribution: log_uniform_values
-      min: 0.001
-      max: 0.5
-    lr:
-      distribution: log_uniform_values
-      min: 0.00001
-      max: 0.001
+  kernel_amplitude:
+    distribution: log_uniform_values
+    min: 0.01
+    max: 1.0
+  weight_decay_beta:
+    distribution: log_uniform_values
+    min: 0.001
+    max: 0.5
+  lr:
+    distribution: log_uniform_values
+    min: 0.00001
+    max: 0.001
   early_terminate:
     type: hyperband
     min_iter: 10000
