@@ -29,17 +29,18 @@ IMG_DIR = "./img/scatter_plots"
 
 
 # Plotting defaults
-ALPHA = 0.5
-MARKER_SCALE = 140
+ALPHA = 0.6
+MARKER_SCALE = 240
+FONT_SIZE = 18
 MODEL_COLORS = {
     "lstm": ("firebrick", "lightcoral"),
     "lstm_ensemble": ("forestgreen", "yellowgreen"),
     "st_tau_lstm": ("midnightblue", "skyblue"),
     "bayesian_lstm": ("orangered", "lightsalmon"),
     "variational_lstm": ("darkmagenta", "orchid"),
-    "ddu_bert": ("lightseagreen", "mediumturquoise"),
-    "variational_bert": ("hotpink", "pink"),
-    "sngp_bert": ("dimgray", "silver"),
+    "ddu_bert": ("darkcyan", "mediumturquoise"),
+    "variational_bert": ("mediumvioletred", "pink"),
+    "sngp_bert": ("black", "silver"),
 }
 METRIC_MARKERS = {
     "max_prob": "o",
@@ -95,8 +96,8 @@ def plot_results(
     size_scales: Optional[Dict[int, float]] = None,
 ):
     num_sizes = len(size_scales)
-    fig, ax = plt.subplots(figsize=(15, 5), ncols=num_sizes, sharey="row")
-    fig.supxlabel(x_label, alpha=0.6, y=0.05, x=0.45, fontsize=12)
+    fig, ax = plt.subplots(figsize=(15, 5), ncols=num_sizes, sharey="row", sharex="row")
+    fig.supxlabel(x_label, alpha=0.6, y=0.05, x=0.45, fontsize=FONT_SIZE)
 
     for a in ax:
         a.grid(visible=True, axis="both", which="major", linestyle=":", color="grey")
@@ -108,7 +109,9 @@ def plot_results(
     for model in data.keys():
         for a, training_size in zip(ax, sorted(data[model])):
             a.set_title(
-                training_size, loc="center", fontdict={"alpha": 0.6, "fontsize": 12}
+                training_size,
+                loc="center",
+                fontdict={"alpha": 0.6, "fontsize": FONT_SIZE},
             )
 
             for metric in metrics:
@@ -180,7 +183,7 @@ def plot_results(
                         arrowstyle=mpatches.ArrowStyle(
                             "simple", head_width=4, head_length=2
                         ),
-                        alpha=ALPHA + 0.2,
+                        alpha=ALPHA + 0.1,
                         color=edge_color,
                         # color="black",
                         fill=True,
@@ -190,7 +193,7 @@ def plot_results(
     # ax.set_xlim([0, 1])
     # ax.set_ylim([0, 1])
     # ax.set_xlabel(x_label, alpha=0.6, fontsize=12)
-    ax[0].set_ylabel(y_label, alpha=0.6, fontsize=12)
+    ax[0].set_ylabel(y_label, alpha=0.6, fontsize=FONT_SIZE, labelpad=-2)
     # ax.legend(labels=data_labels, handles=handles, loc="upper left")
     # ax.axvline(x=2.5, c="black")
 
@@ -201,9 +204,9 @@ def plot_results(
             Line2D(
                 [0],
                 [0],
-                markersize=10,
-                alpha=ALPHA,
-                markerfacecolor="black",
+                markersize=16,
+                alpha=ALPHA + 0.2,
+                markerfacecolor="gray",
                 color="w",
                 label=METRIC_NAMES[metric],
                 marker=metric_markers[metric],
@@ -239,14 +242,19 @@ def plot_results(
     """
     # ]
     ax[-1].legend(
-        bbox_to_anchor=(1.04, 1),
+        bbox_to_anchor=(0.99, 1.05),
         handles=legend_elements,
         loc="upper left",
         ncol=1,
-        fontsize=12,
+        fontsize=FONT_SIZE - 4,
+        handlelength=0.75,
     )
+    # ax[0].ax.tick_params(axis='both', which='minor', labelsize=FONT_SIZE - 6)
 
-    fig.tight_layout()
+    for a in ax:
+        a.tick_params(axis="both", which="major", labelsize=FONT_SIZE - 4)
+
+    fig.tight_layout(w_pad=0.95)
 
     plt.savefig(save_path, format="pdf", dpi=300, bbox_inches="tight")
 
