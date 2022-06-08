@@ -111,8 +111,6 @@ if __name__ == "__main__":
 
         with open(f"{args.result_dir}/{result_path}", "rb") as result_file:
             scores = pickle.load(result_file)
-            a = 3
-            ...
 
             for name, score in scores.items():
 

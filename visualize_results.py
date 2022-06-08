@@ -14,6 +14,7 @@ import pickle
 from matplotlib import pyplot as plt
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
+import matplotlib.patches as mpatches
 import numpy as np
 from nlp_uncertainty_zoo.config import AVAILABLE_MODELS
 
@@ -28,7 +29,8 @@ IMG_DIR = "./img/scatter_plots"
 
 
 # Plotting defaults
-ALPHA = 0.4
+ALPHA = 0.5
+MARKER_SCALE = 140
 MODEL_COLORS = {
     "lstm": ("firebrick", "lightcoral"),
     "lstm_ensemble": ("forestgreen", "yellowgreen"),
@@ -36,7 +38,7 @@ MODEL_COLORS = {
     "bayesian_lstm": ("orangered", "lightsalmon"),
     "variational_lstm": ("darkmagenta", "orchid"),
     "ddu_bert": ("lightseagreen", "mediumturquoise"),
-    "variational_bert": ("gold", "lemonchiffon"),
+    "variational_bert": ("hotpink", "pink"),
     "sngp_bert": ("dimgray", "silver"),
 }
 METRIC_MARKERS = {
@@ -73,7 +75,7 @@ MODEL_NAMES = {
     "variational_bert": "Variational Bert",
     "sngp_bert": "SNGP Bert",
 }
-TRAINING_SIZE_SCALES = {"dan+": {1000: 16, 2000: 60, 4000: 100}}
+TRAINING_SIZE_SCALES = {"dan+": [1000, 2000, 4000], "finnish_ud": [5000, 7500, 10000]}
 plt.style.use("science")
 
 
@@ -92,12 +94,23 @@ def plot_results(
     metric_markers: Dict[str, str] = METRIC_MARKERS,
     size_scales: Optional[Dict[int, float]] = None,
 ):
-    fig = plt.figure(figsize=(5, 5))
-    ax = plt.gca()
-    ax.grid(visible=True, axis="both", which="major", linestyle=":", color="grey")
+    num_sizes = len(size_scales)
+    fig, ax = plt.subplots(figsize=(15, 5), ncols=num_sizes, sharey="row")
+    fig.supxlabel(x_label, alpha=0.6, y=0.05, x=0.45, fontsize=12)
+
+    for a in ax:
+        a.grid(visible=True, axis="both", which="major", linestyle=":", color="grey")
+
+    # fig = plt.figure(figsize=(10, 7.5))
+    # ax = plt.gca()
+    # ax.grid(visible=True, axis="both", which="major", linestyle=":", color="grey")
 
     for model in data.keys():
-        for training_size in data[model]:
+        for a, training_size in zip(ax, sorted(data[model])):
+            a.set_title(
+                training_size, loc="center", fontdict={"alpha": 0.6, "fontsize": 12}
+            )
+
             for metric in metrics:
                 edge_color, color = model_colors[model]
                 target_x = data[model][training_size][x_axis]
@@ -115,50 +128,69 @@ def plot_results(
                 if len(target_x) != len(target_y):
                     continue
 
-                # TODO: Only plot mean over runs
+                jitter_x = np.random.normal(0, 0.01, target_x.shape)
+                jitter_y = np.random.normal(0, 0.01, target_y.shape)
 
-                plt.scatter(
+                target_x = np.mean(target_x + jitter_x)
+                target_y = np.mean(target_y + jitter_y)
+
+                a.scatter(
                     target_x,
                     target_y,
                     marker=metric_markers[metric],
                     color=color,
                     edgecolor=edge_color,
                     alpha=ALPHA,
-                    s=size_scales[training_size],
+                    s=MARKER_SCALE,  # size_scales[training_size],
                 )
 
                 if plot_ood:
+
+                    ood_target_x = data[model][training_size]["ood_" + x_axis]
+                    ood_target_x = np.mean(ood_target_x + jitter_x)
                     ood_target_y = data[model][training_size][
                         "ood_" + metric_prefix + metric + metric_postfix
                     ]
+                    ood_target_y = np.mean(ood_target_y + jitter_y)
 
-                    plt.scatter(
-                        target_x,
+                    a.scatter(
+                        ood_target_x,
                         ood_target_y,
                         marker=metric_markers[metric],
                         color=color,
                         edgecolor=edge_color,
                         alpha=ALPHA,
-                        s=size_scales[training_size],
+                        s=MARKER_SCALE,  # size_scales[training_size],
                     )
 
+                    dx, dy = ood_target_x - target_x, ood_target_y - target_y
+                    norm = np.linalg.norm([dx, dy])
+                    dx /= norm
+                    dy /= norm
+                    offset_factor = 0.0025
+
                     # Draw arrow
-                    # TODO: Adjust x position
-                    for x, y, new_y in zip(target_x, target_y, ood_target_y):
-                        plt.arrow(
-                            x,
-                            y,
-                            0,
-                            new_y - y,
-                            alpha=ALPHA + 0.1,
-                            color=edge_color,
-                            width=0.00005 * np.sqrt(size_scales[training_size]),
-                        )
+                    arrow = mpatches.FancyArrowPatch(
+                        (target_x + offset_factor * dx, target_y + offset_factor * dy),
+                        (
+                            ood_target_x - offset_factor * dx,
+                            ood_target_y - offset_factor * dy,
+                        ),
+                        mutation_scale=2,
+                        arrowstyle=mpatches.ArrowStyle(
+                            "simple", head_width=4, head_length=2
+                        ),
+                        alpha=ALPHA + 0.2,
+                        color=edge_color,
+                        # color="black",
+                        fill=True,
+                    )
+                    a.add_patch(arrow)
 
     # ax.set_xlim([0, 1])
     # ax.set_ylim([0, 1])
-    ax.set_xlabel(x_label, alpha=0.6)
-    ax.set_ylabel(y_label, alpha=0.6)
+    # ax.set_xlabel(x_label, alpha=0.6, fontsize=12)
+    ax[0].set_ylabel(y_label, alpha=0.6, fontsize=12)
     # ax.legend(labels=data_labels, handles=handles, loc="upper left")
     # ax.axvline(x=2.5, c="black")
 
@@ -186,24 +218,33 @@ def plot_results(
                 label=MODEL_NAMES[model_name],
                 alpha=ALPHA,
             )
-            for model_name in data.keys()
-        ],
-        # Add training sizes
-        *[
-            Line2D(
-                [0],
-                [0],
-                markersize=np.sqrt(scale),
-                alpha=ALPHA,
-                markerfacecolor="black",
-                color="w",
-                label=size,
-                marker="o",
-            )
-            for size, scale in size_scales.items()
+            for model_name in list(MODEL_NAMES.keys())
         ],
     ]
-    ax.legend(handles=legend_elements, loc=legend_loc, ncol=2, fontsize=8)
+    # Add training sizes
+    """
+    *[
+        Line2D(
+            [0],
+            [0],
+            markersize=np.sqrt(scale),
+            alpha=ALPHA,
+            markerfacecolor="black",
+            color="w",
+            label=size,
+            marker="o",
+        )
+        for size, scale in size_scales.items()
+    ],
+    """
+    # ]
+    ax[-1].legend(
+        bbox_to_anchor=(1.04, 1),
+        handles=legend_elements,
+        loc="upper left",
+        ncol=1,
+        fontsize=12,
+    )
 
     fig.tight_layout()
 
@@ -222,9 +263,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--models",
         type=str,
-        required=True,
         nargs="+",
         choices=AVAILABLE_MODELS.keys(),
+        default=AVAILABLE_MODELS.keys(),
     )
     parser.add_argument("--result-dir", type=str, default=RESULT_DIR)
     args = parser.parse_args()
@@ -254,23 +295,33 @@ if __name__ == "__main__":
 
     # TODO: Potentially split by LSTM / transformers
 
+    max_run_per_model = defaultdict(int)
+
     for result_path in result_paths:
-        _, training_size, model_name = (
-            re.compile(r"(.+?)_(\d+)_(.+)_\d{2}-\d{2}-\d{4}")
+        _, training_size, model_name, run = (
+            re.compile(r"(.+?)_(\d+)_(.+)_(\d)_\d{2}-\d{2}-\d{4}")
             .match(result_path)
             .groups()
         )
         training_size = int(training_size)
+
+        run = int(run)
+
+        if run < max_run_per_model[model_name]:
+            continue
 
         with open(f"{args.result_dir}/{result_path}", "rb") as result_file:
             scores = pickle.load(result_file)
 
             for name, score in scores.items():
 
+                if name in ("train_loss", "_timestamp", "_runtime"):
+                    continue
+
                 if name.startswith("auroc"):
                     found_metrics.add(name.replace("auroc_", ""))
 
-                data[model_name][training_size][name] += score
+                data[model_name][training_size][name] = np.array(score)
 
     # Create plots
     plot_results(
@@ -281,7 +332,7 @@ if __name__ == "__main__":
         x_label="Macro F1 score",
         y_label="ID / OOD AUROC",
         data=data,
-        save_path=f"{IMG_DIR}/scatter_auroc.pdf",
+        save_path=f"{IMG_DIR}/{args.dataset}_scatter_auroc.pdf",
         size_scales=TRAINING_SIZE_SCALES[args.dataset],
     )
 
@@ -293,7 +344,7 @@ if __name__ == "__main__":
         x_label="Macro F1 score",
         y_label="ID / OOD AUPR",
         data=data,
-        save_path=f"{IMG_DIR}/scatter_aupr.pdf",
+        save_path=f"{IMG_DIR}/{args.dataset}_scatter_aupr.pdf",
         size_scales=TRAINING_SIZE_SCALES[args.dataset],
     )
 
@@ -309,7 +360,7 @@ if __name__ == "__main__":
         y_label="Token-level Kendall's tau",
         data=data,
         plot_ood=True,
-        save_path=f"{IMG_DIR}/scatter_kendalls_tau_token.pdf",
+        save_path=f"{IMG_DIR}/{args.dataset}_scatter_kendalls_tau_token.pdf",
         size_scales=TRAINING_SIZE_SCALES[args.dataset],
         legend_loc="lower right",
     )
@@ -323,7 +374,7 @@ if __name__ == "__main__":
         y_label="Sequence-level Kendall's tau",
         data=data,
         plot_ood=True,
-        save_path=f"{IMG_DIR}/scatter_kendalls_tau_seq.pdf",
+        save_path=f"{IMG_DIR}/{args.dataset}_scatter_kendalls_tau_seq.pdf",
         size_scales=TRAINING_SIZE_SCALES[args.dataset],
     )
     plot_results(
@@ -335,6 +386,6 @@ if __name__ == "__main__":
         y_label="Sequence-level Kendall's tau (max)",
         data=data,
         plot_ood=True,
-        save_path=f"{IMG_DIR}/scatter_kendalls_tau_seq_max.pdf",
+        save_path=f"{IMG_DIR}/{args.dataset}_scatter_kendalls_tau_seq_max.pdf",
         size_scales=TRAINING_SIZE_SCALES[args.dataset],
     )
