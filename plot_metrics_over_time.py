@@ -10,7 +10,8 @@ from typing import List, Optional, Dict
 
 # EXT
 import matplotlib.pyplot as plt
-import numpy as np
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
 from nlp_uncertainty_zoo.config import AVAILABLE_MODELS
 import pandas as pd
 
@@ -19,6 +20,7 @@ from src.config import AVAILABLE_DATASETS
 
 # CONST
 SEED = 123456
+ALPHA = 0.6
 RESULT_DIR = "./results"
 MODEL_DIR = "./models"
 IMG_DIR = "./img/time"
@@ -44,16 +46,28 @@ MODEL_NAMES = {
     "variational_bert": "Variational Bert",
     "sngp_bert": "SNGP Bert",
 }
+TRAINING_SIZE_LINESTYLES = {
+    "dan+": {
+        1000: "dotted",
+        2000: "dashed",
+        4000: "solid",
+    },
+    "finnish_ud": {5000: "dotted", 7500: "dashed", 10000: "solid"},
+}
+plt.style.use("science")
 
 
 def plot_timeseries(
     data: pd.DataFrame,
+    dataset: str,
     target: str,
     target_name: Optional[str] = None,
+    step_cutoff: Optional[int] = None,
     colors: Optional[Dict[str, str]] = None,
+    metrics: List[str] = None,
     save_path: Optional[str] = None,
 ):
-    fig = plt.figure(figsize=(8, 5))
+    fig = plt.figure(figsize=(7.5, 4))
     ax = plt.gca()
     ax.grid(visible=True, axis="both", which="major", linestyle=":", color="grey")
 
@@ -63,10 +77,24 @@ def plot_timeseries(
         if target in col
     )
 
+    found_models = set()
+    found_training_sizes = set()
+
     for target_column in target_columns:
+
+        if metrics is None:
+            continue
+
+        else:
+            if all([metric not in target_column for metric in metrics]):
+                continue
+
         model_name, training_size = (
             re.compile(r"(.+)_(\d+)_.+").match(target_column).groups()
         )
+        found_models.add(model_name)
+        training_size = int(training_size)
+        found_training_sizes.add(training_size)
 
         x = data[f"{target_column}_mean"].index - 1
         data_means, data_stds = (
@@ -74,13 +102,22 @@ def plot_timeseries(
             data[f"{target_column}_std"].values,
         )
 
+        if step_cutoff is not None:
+            mask = step_cutoff >= x
+            x = x[mask]
+            data_means = data_means[mask]
+            data_stds = data_stds[mask]
+
         # Plot line
         ax.plot(
+            x,
             data_means,
-            label=MODEL_NAMES[model_name],
+            label=f"{MODEL_NAMES[model_name]} ({training_size})",
             color=colors[model_name][0],
             alpha=0.8,
             markersize=12,
+            linestyle=TRAINING_SIZE_LINESTYLES[dataset][training_size],
+            linewidth=1.6,
         )
 
         # Plot +/- standard deviation
@@ -93,17 +130,54 @@ def plot_timeseries(
         )
 
     # plt.xticks(x, xticks, fontsize=12)
-    plt.xlabel("Batch number")
+    plt.xlabel("Training step", fontsize=16, alpha=0.6)
+    plt.tick_params(axis="both", which="major", labelsize=16 - 4)
 
     if target_name is None:
-        plt.ylabel(target)
+        plt.ylabel(target, fontsize=16, alpha=0.6)
     else:
-        plt.ylabel(target_name)
+        plt.ylabel(target_name, fontsize=16, alpha=0.6)
 
-    plt.xticks(np.arange(0, len(x)), x, fontsize=12)
+    # plt.xticks(np.arange(0, len(x)), x, fontsize=12)
     # ax.xaxis.set_ticklabels([])
     # plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
-    plt.legend(loc="upper right")
+
+    # Create custom legend
+    legend_elements = [
+        # Add models
+        *[
+            Patch(
+                facecolor=MODEL_COLORS[model_name][1],
+                edgecolor=MODEL_COLORS[model_name][0],
+                label=MODEL_NAMES[model_name],
+                alpha=ALPHA,
+            )
+            for model_name in found_models
+        ],
+        # Add training sizes
+        *[
+            Line2D(
+                [0],
+                [0],
+                linestyle=TRAINING_SIZE_LINESTYLES[dataset][training_size],
+                linewidth=1.5,
+                alpha=ALPHA + 0.2,
+                color="black",
+                label=training_size,
+            )
+            for training_size in sorted(found_training_sizes)
+        ],
+    ]
+    plt.legend(
+        handles=legend_elements,
+        loc="lower right",
+        ncol=1,
+        fontsize=16 - 4,
+        handlelength=1,
+        facecolor="white",
+        framealpha=0.8,
+        frameon=True,
+    )
 
     fig.tight_layout()
 
@@ -146,7 +220,14 @@ if __name__ == "__main__":
         nargs="+",
         choices=AVAILABLE_MODELS.keys(),
     )
+    parser.add_argument(
+        "--metrics",
+        type=str,
+        default=None,
+        nargs="+",
+    )
     parser.add_argument("--training-sizes", type=int, nargs="+", default=tuple())
+    parser.add_argument("--step-cutoff", type=int, default=None)
     parser.add_argument("--result-dir", type=str, default=RESULT_DIR)
     parser.add_argument("--output-dir", type=str, default=IMG_DIR)
     args = parser.parse_args()
@@ -162,7 +243,9 @@ if __name__ == "__main__":
         if data_set not in path:
             return False
 
-        if not any([f"_{model}_" in path for model in models]):
+        if not any(
+            [re.search(fr"\d+_{model}_\d", path) is not None for model in models]
+        ):
             return False
 
         if len(args.training_sizes) > 0:
@@ -227,11 +310,22 @@ if __name__ == "__main__":
             }
         ).drop(run_columns, 1)
 
+    metric_model_infix = ""
+
+    if args.metrics is not None:
+        metric_model_infix += f"_{'_'.join(args.metrics)}_"
+
+    if args.models is not None:
+        metric_model_infix += f"_{'_'.join(args.models)}_"
+
     # Plot data
     plot_timeseries(
         all_data,
+        dataset=args.dataset,
         target=args.target,
         target_name=args.target_name,
+        step_cutoff=args.step_cutoff,
         colors=MODEL_COLORS,
-        save_path=f"{args.output_dir}/{args.dataset}_{args.target}.pdf",
+        metrics=args.metrics,
+        save_path=f"{args.output_dir}/{args.dataset}_{metric_model_infix}{args.target}.pdf",
     )
