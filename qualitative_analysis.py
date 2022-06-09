@@ -86,12 +86,22 @@ def plot_uncertainties_over_sequence(
     normalize: bool = True,
     save_path: Optional[str] = None,
 ):
-    fig = plt.figure(figsize=(8, 5))
+    fig = plt.figure(figsize=(15, 7))
     ax = plt.gca()
     ax.grid(visible=True, axis="both", which="major", linestyle=":", color="grey")
 
     x = np.arange(0, list(uncertainties.values())[0].shape[1])
     models, metrics = set(), set()
+
+    if sentence is not None:
+        try:
+            sentence_end = sentence.index("[SEP]")
+        except ValueError:
+            sentence_end = len(sentence)
+
+        x = x[: sentence_end - 1]
+        sentence = sentence[1:sentence_end]
+        labels = labels[1:sentence_end]
 
     for name, data in uncertainties.items():
 
@@ -99,16 +109,23 @@ def plot_uncertainties_over_sequence(
         models.add(model)
         metrics.add(metric)
 
+        if sentence is not None:
+            data = data[:, 1:sentence_end]
+
         if normalize:
             flattened_data = data.flatten()
             data = (data - np.mean(flattened_data)) / np.std(flattened_data)
+
+        # Cut data - mostly when transformers pad sentence too long
+        if data.shape[1] > x.shape[0]:
+            data = data[:, x.shape[0]]
 
         # Plot line
         ax.plot(
             data.mean(axis=0),
             label=name,
             marker=markers[metric],
-            markersize=6,
+            markersize=12,
             color=colors[model][0],
             alpha=0.8,
         )
@@ -122,7 +139,9 @@ def plot_uncertainties_over_sequence(
             alpha=0.2,
         )
 
-    ax.set_ylabel("Uncertainty", alpha=0.6)
+    ax.set_ylabel(
+        f"{'Normalized ' if normalize else ''}Uncertainty", alpha=0.6, fontsize=16
+    )
 
     # Set xticks
     if labels is not None:
@@ -131,9 +150,11 @@ def plot_uncertainties_over_sequence(
     else:
         xticks = sentence
 
-    plt.xticks(x, xticks, fontsize=12)
-    ax.yaxis.set_ticklabels([])
-    plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+    plt.xticks(x, xticks, fontsize=16)
+    # ax.yaxis.set_ticklabels([])
+    plt.setp(
+        ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor", alpha=0.6
+    )
 
     legend_elements = [
         # Add metrics
@@ -161,7 +182,14 @@ def plot_uncertainties_over_sequence(
             for model_name in models
         ],
     ]
-    ax.legend(handles=legend_elements, loc="upper right", ncol=2, fontsize=8)
+    ax.legend(
+        handles=legend_elements,
+        loc="upper left",
+        ncol=1,
+        fontsize=14,
+        bbox_to_anchor=(1.02, 1),
+        handlelength=0.75,
+    )
 
     fig.tight_layout()
 
@@ -175,6 +203,8 @@ def plot_uncertainties_over_sequence(
             dpi=300,
             bbox_inches="tight",
         )
+
+    plt.close()
 
 
 if __name__ == "__main__":
@@ -193,11 +223,17 @@ if __name__ == "__main__":
         nargs="+",
         choices=AVAILABLE_MODELS.keys(),
     )
+    parser.add_argument(
+        "--metrics",
+        type=str,
+        default=None,
+        nargs="+",
+    )
     parser.add_argument("--training-sizes", type=int, nargs="+", default=tuple())
     parser.add_argument("--result-dir", type=str, default=RESULT_DIR)
     parser.add_argument("--output-dir", type=str, default=IMG_DIR)
     parser.add_argument(
-        "--top-n", type=str, default=TOP_N, help="Top n samples to plot per analysis."
+        "--top-n", type=int, default=TOP_N, help="Top n samples to plot per analysis."
     )
     args = parser.parse_args()
 
@@ -246,6 +282,14 @@ if __name__ == "__main__":
         data = pd.read_csv(f"{args.result_dir}/{path}", delimiter="\t")
         data = data.drop(columns=["Unnamed: 0"])
 
+        if args.metrics is not None:
+            drop_metric_columns = (
+                set(data.columns)
+                - {"sentence", "labels", "predictions"}
+                - set(args.metrics)
+            )
+            data = data.drop(columns=drop_metric_columns)
+
         # Gather info about available results
         models2sizes[model_name].append(training_size)
         for column in data.columns:
@@ -268,7 +312,16 @@ if __name__ == "__main__":
         else:
             # Remove these columns before joining to avoid duplication
             data = data.drop(columns=["sentence", "labels"])
-            all_data = all_data.join(data)
+
+            try:
+                all_data = all_data.join(data)
+
+            # Duplicate data, skip
+            except ValueError:
+                print(
+                    f"Duplicate data found for {args.dataset} {training_size}, {model_name}"
+                )
+                continue
 
     # Aggregate measurements across runs
     aggregate_data = defaultdict(dict)
@@ -277,6 +330,7 @@ if __name__ == "__main__":
         for metric, training_size in itertools.product(
             models2metrics[model], models2sizes[model]
         ):
+
             # Find all columns corresponding to some model, training size and metric
             run_columns = [
                 column
@@ -293,38 +347,6 @@ if __name__ == "__main__":
                 combined_data = np.stack(row.values)
                 aggregate_data[i][f"{model} {training_size} - {metric}"] = combined_data
 
-            # Assign means and standard deviations to data
-            # aggregate_data[f"{model} {training_size} - {metric}"] = ...
-            """
-            # Compute mean and std over all time steps over model runs
-            run_data = all_data[run_columns].applymap(lambda cell: np.array(list(map(float, cell.split()))))
-            column_means = run_data.apply(lambda cells: cells.mean(), axis=1)
-            run_data = run_data.apply(lambda series: (series - column_means) ** 2)
-            column_stds = run_data.apply(lambda cells: cells.mean(), axis=1)
-            column_stds = column_stds.apply(lambda arr: np.sqrt(arr))
-
-            # Assign means and standard deviations to data
-            aggregate_data[f"{model} {training_size} - {metric}_mean"] = column_means
-            aggregate_data[f"{model} {training_size} - {metric}_std"] = column_stds
-            """
-
-    """
-    # Create additional statistics
-    for index, row in all_data.iterrows():
-        ...
-
-    # 1. Most uncertain sentences
-    # TODO: Max mean across metrics
-
-    # 1. Least uncertain sentences
-    # TODO: Min mean across metrics
-
-    # 2. Sentences with biggest disagreements between models / metrics
-    # TODO: Max variance across metrics
-
-    # 3. Somehow biggest differences between metrics
-    """
-
     # Sample indices
     sampled_indices = np.random.choice(range(0, len(all_data)), args.top_n)
     dataset_builder = AVAILABLE_DATASETS[args.dataset](
@@ -339,7 +361,7 @@ if __name__ == "__main__":
     if not os.path.exists(f"{IMG_DIR}/{args.dataset}"):
         os.makedirs(f"{IMG_DIR}/{args.dataset}")
 
-    for idx in sampled_indices:
+    for i, idx in enumerate(sampled_indices):
         uncertainties = aggregate_data[idx]
         labels = list(map(int, all_data.loc[idx, "labels"].split()))
         labels = [
@@ -349,12 +371,19 @@ if __name__ == "__main__":
         sentence = all_data.loc[idx, "sentence"]
         sentence = tokenizer.tokenize(sentence)
 
-        plot_uncertainties_over_sequence(
-            uncertainties=uncertainties,
-            sentence=sentence,
-            labels=labels,
-            colors=MODEL_COLORS,
-            markers=METRIC_MARKERS,
-            normalize=True,
-            save_path=f"{IMG_DIR}/{args.dataset}/{idx}.pdf",
-        )
+        # Skip short sentences
+        if sentence.index("[SEP]") <= 10:
+            continue
+
+        try:
+            plot_uncertainties_over_sequence(
+                uncertainties=uncertainties,
+                sentence=sentence,
+                labels=labels,
+                colors=MODEL_COLORS,
+                markers=METRIC_MARKERS,
+                normalize=True,
+                save_path=f"{IMG_DIR}/{args.dataset}/{i}.pdf",
+            )
+        except ValueError:
+            continue

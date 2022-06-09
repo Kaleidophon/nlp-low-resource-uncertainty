@@ -186,6 +186,11 @@ if __name__ == "__main__":
 
                 # Metric-specific results: Get the best performing one
                 elif "kendalls_tau" in column:
+
+                    if "token" in column and args.dataset == "clinc_plus":
+                        row_string += "& \\backslashbox[15mm]{}{} "
+                        continue
+
                     all_id_scores = {
                         name: scores
                         for name, scores in data[model].items()
