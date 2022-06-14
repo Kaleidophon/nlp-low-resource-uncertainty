@@ -19,17 +19,17 @@ parameters:
   # Actual hyperparameter search params
   prior_sigma_1:
     min: 0.1
-    max: 1
+    max: 1.0
   prior_sigma_2:
     min: 0.1
-    max: 1
+    max: 1.0
   posterior_mu_init:
     min: -0.6
     max: 0.6
   posterior_rho_init:
     distribution: log_uniform
-    min: -8
-    max: -2
+    min: -8.0
+    max: -2.0
   prior_pi:
     min: 0.1
     max: 0.9
@@ -41,10 +41,10 @@ parameters:
     max: 0.4
   lr:
     min: 0.1
-    max: 1
+    max: 1.0
 early_terminate:
   type: hyperband
-  min_iter: 8
+  min_iter: 10000
 command:
   - python3
   - ${program}

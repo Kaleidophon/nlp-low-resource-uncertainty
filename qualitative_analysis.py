@@ -28,6 +28,7 @@ MODEL_DIR = "./models"
 IMG_DIR = "./img/qualitative"
 TOP_N = 10
 ALPHA = 0.6
+FONT_SIZE = 22
 DATA_DIR = "data/processed"
 
 # Plotting
@@ -86,7 +87,7 @@ def plot_uncertainties_over_sequence(
     normalize: bool = True,
     save_path: Optional[str] = None,
 ):
-    fig = plt.figure(figsize=(15, 7))
+    fig = plt.figure(figsize=(15, 8))
     ax = plt.gca()
     ax.grid(visible=True, axis="both", which="major", linestyle=":", color="grey")
 
@@ -125,7 +126,7 @@ def plot_uncertainties_over_sequence(
             data.mean(axis=0),
             label=name,
             marker=markers[metric],
-            markersize=12,
+            markersize=18,
             color=colors[model][0],
             alpha=0.8,
         )
@@ -140,7 +141,9 @@ def plot_uncertainties_over_sequence(
         )
 
     ax.set_ylabel(
-        f"{'Normalized ' if normalize else ''}Uncertainty", alpha=0.6, fontsize=16
+        f"{'Normalized ' if normalize else 'Unnormalized '}Uncertainty",
+        alpha=0.6,
+        fontsize=FONT_SIZE,
     )
 
     # Set xticks
@@ -150,10 +153,15 @@ def plot_uncertainties_over_sequence(
     else:
         xticks = sentence
 
-    plt.xticks(x, xticks, fontsize=16)
+    plt.xticks(x, xticks, fontsize=FONT_SIZE)
     # ax.yaxis.set_ticklabels([])
     plt.setp(
-        ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor", alpha=0.6
+        ax.get_xticklabels(),
+        rotation=45,
+        ha="right",
+        rotation_mode="anchor",
+        alpha=0.6,
+        fontsize=FONT_SIZE,
     )
 
     legend_elements = [
@@ -162,7 +170,7 @@ def plot_uncertainties_over_sequence(
             Line2D(
                 [0],
                 [0],
-                markersize=10,
+                markersize=18,
                 alpha=ALPHA,
                 markerfacecolor="black",
                 color="w",
@@ -185,9 +193,9 @@ def plot_uncertainties_over_sequence(
     ax.legend(
         handles=legend_elements,
         loc="upper left",
-        ncol=1,
-        fontsize=14,
-        bbox_to_anchor=(1.02, 1),
+        ncol=2,
+        fontsize=FONT_SIZE - 2,
+        # bbox_to_anchor=(1.02, 1),
         handlelength=0.75,
     )
 
@@ -232,6 +240,7 @@ if __name__ == "__main__":
     parser.add_argument("--training-sizes", type=int, nargs="+", default=tuple())
     parser.add_argument("--result-dir", type=str, default=RESULT_DIR)
     parser.add_argument("--output-dir", type=str, default=IMG_DIR)
+    parser.add_argument("--normalize", action="store_true", default=False)
     parser.add_argument(
         "--top-n", type=int, default=TOP_N, help="Top n samples to plot per analysis."
     )
@@ -382,7 +391,7 @@ if __name__ == "__main__":
                 labels=labels,
                 colors=MODEL_COLORS,
                 markers=METRIC_MARKERS,
-                normalize=True,
+                normalize=args.normalize,
                 save_path=f"{IMG_DIR}/{args.dataset}/{i}.pdf",
             )
         except ValueError:
