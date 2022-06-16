@@ -32,9 +32,9 @@ parameters:
     distribution: log_uniform_values
     min: 0.00001
     max: 0.001
-  early_terminate:
-    type: hyperband
-    min_iter: 10000
+early_terminate:
+  type: hyperband
+  min_iter: 10000
 command:
   - python3
   - ${program}

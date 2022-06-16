@@ -65,8 +65,8 @@ FINNISH_UD_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0.0332,
-        "lr": 0.1161,
+        "weight_decay": 0.03229,
+        "lr": 0.1549,
         "num_training_steps": 20955,  # Changed from 55 in original
         "validation_interval": 381,
         # "early_stopping_pat": 10,
@@ -80,14 +80,14 @@ FINNISH_UD_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 650,
         "input_size": 650,
-        "dropout": 0.2527,
+        "dropout": 0.331,
         "vocab_size": 50105,
         "output_size": 16,
-        "prior_sigma_1": 0.9794,
-        "prior_sigma_2": 0.7785,
-        "prior_pi": 1,
-        "posterior_mu_init": -0.1655,
-        "posterior_rho_init": -7.0,
+        "prior_sigma_1": 0.3246,
+        "prior_sigma_2": 0.5601,
+        "prior_pi": 0.1189,
+        "posterior_mu_init": 0.4834,
+        "posterior_rho_init": 0.1124,
         "num_predictions": 10,
         "is_sequence_classifier": False,
     },
@@ -95,11 +95,11 @@ FINNISH_UD_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0.005934,
-        "lr": 0.1515,
+        "weight_decay": 0.0007857,
+        "lr": 0.3601,
         "num_training_steps": 20955,  # Changed from 55 in original
         "validation_interval": 381,
-        # "early_stopping_pat": 10,
+        # "early_stopping_pat": 10
         "grad_clip": 10,
         "optimizer_class": optim.SGD,
         "scheduler_class": scheduler.MultiStepLR,
@@ -110,11 +110,11 @@ FINNISH_UD_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 350,
         "input_size": 650,
-        "dropout": 0.2546,
+        "dropout": 0.1737,
         "vocab_size": 50105,
         "output_size": 16,
         "num_predictions": 10,
-        "num_centroids": 20,
+        "num_centroids": 30,
         "is_sequence_classifier": False,
     },
     # Taken from  https://github.com/yaringal/BayesianRNN/blob/master/LM_code/main_new_dropout_SOTA.lua
@@ -128,7 +128,7 @@ FINNISH_UD_MODEL_PARAMS = {
         "validation_interval": 381,
         # "early_stopping_pat": 10,
         "grad_clip": 10,
-        "init_weight": 0.1097,  # Hacky way to include this for replication, this prob. won't be used anywhere else
+        "init_weight": 0.5848,
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
@@ -137,7 +137,7 @@ FINNISH_UD_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 350,
         "input_size": 650,
-        "embedding_dropout": 0.1519,  # dropout_x, Large model Gal & Ghrahramani (2016)
+        "embedding_dropout": 0.3566,  # dropout_x, Large model Gal & Ghrahramani (2016)
         "layer_dropout": 0.3923,  # dropout_i / dropout_o, Large model Gal & Ghrahramani (2016)
         "time_dropout": 0.1646,  # dropout_h, Large model Gal & Ghrahramani (2016)
         "vocab_size": 50105,
