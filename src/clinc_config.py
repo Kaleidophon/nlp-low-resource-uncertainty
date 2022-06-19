@@ -74,7 +74,7 @@ CLINC_MODEL_PARAMS = {
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
-            "milestones": range(9 * 425, 54 * 425, 425),
+            "milestones": range(7 * 425, 20 * 425, 425),
         },
         "num_layers": 2,
         "hidden_size": 650,
@@ -95,12 +95,12 @@ CLINC_MODEL_PARAMS = {
         "sequence_length": 35,
         "early_stopping": True,
         "weight_decay": 0.003967,
-        "lr": 0.08063,
+        "lr": 0.0003063,
         "num_training_steps": 23375,
         "validation_interval": 425,
         # "early_stopping_pat": 10,
-        "grad_clip": 5,
-        "optimizer_class": optim.SGD,
+        "grad_clip": 10,
+        "optimizer_class": optim.Adam,
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
@@ -109,11 +109,11 @@ CLINC_MODEL_PARAMS = {
         "num_layers": 2,
         "hidden_size": 650,
         "input_size": 650,
-        "dropout": 0.2562,
+        "dropout": 0.1562,
         "vocab_size": 30522,
         "output_size": 151,
         "num_predictions": 10,
-        "num_centroids": 5,
+        "num_centroids": 2,
         "is_sequence_classifier": True,
     },
     # Taken from  https://github.com/yaringal/BayesianRNN/blob/master/LM_code/main_new_dropout_SOTA.lua
@@ -121,23 +121,24 @@ CLINC_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0.009555,
-        "lr": 0.02297,
+        "weight_decay": 0.0009555,
+        "lr": 0.0021297,
         "num_training_steps": 23375,
         "validation_interval": 425,
-        "grad_clip": 5,
-        "init_weight": 0.283,
+        "grad_clip": 10,
+        "init_weight": 0.25,
+        "optimizer_class": optim.Adam,
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
             "milestones": range(13 * 425, 54 * 425, 425),
         },
         "num_layers": 2,
-        "hidden_size": 350,
+        "hidden_size": 650,
         "input_size": 650,
-        "embedding_dropout": 0.2265,  # dropout_x, Large model Gal & Ghrahramani (2016)
-        "layer_dropout": 0.2655,  # dropout_i / dropout_o, Large model Gal & Ghrahramani (2016)
-        "time_dropout": 0.2758,  # dropout_h, Large model Gal & Ghrahramani (2016)
+        "embedding_dropout": 0.1265,  # dropout_x, Large model Gal & Ghrahramani (2016)
+        "layer_dropout": 0.1655,  # dropout_i / dropout_o, Large model Gal & Ghrahramani (2016)
+        "time_dropout": 0.1758,  # dropout_h, Large model Gal & Ghrahramani (2016)
         "vocab_size": 30522,
         "output_size": 151,
         "num_predictions": 10,  # Changed from 1000 because that's just excessive
