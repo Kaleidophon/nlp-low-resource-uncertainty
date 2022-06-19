@@ -66,7 +66,7 @@ CLINC_MODEL_PARAMS = {
         "early_stopping": True,
         "weight_decay": 0.001337,
         "lr": 0.1704,
-        "num_training_steps": 23375,
+        "num_training_steps": 18 * 425,
         "validation_interval": 425,
         # "early_stopping_pat": 10,
         "grad_clip": 5,
@@ -74,7 +74,7 @@ CLINC_MODEL_PARAMS = {
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
-            "milestones": range(7 * 425, 20 * 425, 425),
+            "milestones": range(7 * 425, 18 * 425, 425),
         },
         "num_layers": 2,
         "hidden_size": 650,
