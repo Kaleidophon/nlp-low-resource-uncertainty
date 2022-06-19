@@ -74,7 +74,7 @@ CLINC_MODEL_PARAMS = {
         "scheduler_class": scheduler.MultiStepLR,
         "scheduler_kwargs": {
             "gamma": 0.8695,  # 1 / 1.15; in the Zaremba implementation you divide by gamma,
-            "milestones": range(13 * 425, 54 * 425, 425),
+            "milestones": range(9 * 425, 54 * 425, 425),
         },
         "num_layers": 2,
         "hidden_size": 650,
