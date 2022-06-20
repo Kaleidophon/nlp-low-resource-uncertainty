@@ -225,10 +225,16 @@ if __name__ == "__main__":
                 mean_ood = format_res(np.mean(ood_scores))
                 std_ood = format_res(np.std(ood_scores))
 
-                row_string += (
-                    f"& $\\rs{{{mean_id}{id_metric_marker}}}{{{std_id}}}"
-                    f"{{{mean_ood}{ood_metric_marker}}}{{{std_ood}}}$ "
-                )
+                if args.dataset != "clinc_plus":
+                    row_string += (
+                        f"& $\\rs{{{mean_id}{id_metric_marker}}}{{{std_id}}}"
+                        f"{{{mean_ood}{ood_metric_marker}}}{{{std_ood}}}$ "
+                    )
+
+                else:
+                    row_string += (
+                        f"& $\\srs{{{mean_id}{id_metric_marker}}}{{{std_id}}}$ "
+                    )
 
         row_string += " \\\\"
         print(row_string)

@@ -98,7 +98,7 @@ if __name__ == "__main__":
                     found_metrics.add(eval_metric)
                     data[eval_metric][
                         f"{model_name}_{training_size}_{uncertainty_metric}"
-                    ] += score
+                    ] = score
 
                 elif "kendalls_tau" in name:
                     split, uncertainty_metric, level = (
@@ -110,19 +110,34 @@ if __name__ == "__main__":
                     found_metrics.add(eval_metric)
                     data[eval_metric][
                         f"{model_name}_{training_size}_{uncertainty_metric}"
-                    ] += score
+                    ] = score
 
                 else:
                     found_metrics.add(name)
-                    data[name][f"{model_name}_{training_size}"] += score
+                    data[name][f"{model_name}_{training_size}"] = score
 
     # Write stdout to file
     sys.stdout = open(f"{args.output_dir}/{args.dataset}_significance_testing.txt", "w")
     num_jobs = psutil.cpu_count(logical=True)
 
+    # Filter metrics
+    found_metrics = list(
+        filter(lambda metric: not metric.startswith("_"), found_metrics)
+    )
+
+    if args.dataset == "clinc_plus":
+        found_metrics = list(
+            filter(lambda metric: not metric.startswith("ood"), found_metrics)
+        )
+
     for metric in found_metrics:
         print(metric)
-        result_df = multi_aso(dict(data[metric]), return_df=True, num_jobs=num_jobs)
+        result_df = multi_aso(
+            dict(data[metric]),
+            return_df=True,
+            num_jobs=num_jobs,
+            num_bootstrap_iterations=500,
+        )
         print(result_df.to_string())
         print("")
 
