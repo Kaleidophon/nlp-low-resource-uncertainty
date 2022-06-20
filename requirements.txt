@@ -5,3 +5,4 @@ numpy
 pandas
 torch
 SciencePlots
+deepsig
