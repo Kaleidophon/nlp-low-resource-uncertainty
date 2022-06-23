@@ -1,0 +1,90 @@
+id_coverage_percentage
+                        sngp_bert_15000  lstm_ensemble_15000  ddu_bert_15000  bayesian_lstm_15000  variational_bert_15000  lstm_15000
+sngp_bert_15000                1.000000             0.000000        0.000000             0.000000                0.993575    0.993555
+lstm_ensemble_15000            1.000000             1.000000        0.000000             0.995505                0.994942    0.994887
+ddu_bert_15000                 1.000000             1.000000        1.000000             0.994792                0.994854    0.994812
+bayesian_lstm_15000            1.000000             0.007259        0.006295             1.000000                0.994991    0.994929
+variational_bert_15000         0.013295             0.005304        0.005496             0.005188                1.000000    1.000000
+lstm_15000                     0.013409             0.005345        0.005525             0.005234                0.178277    1.000000
+
+accuracy
+                        sngp_bert_15000  lstm_ensemble_15000  ddu_bert_15000  bayesian_lstm_15000  variational_bert_15000  lstm_15000
+sngp_bert_15000                1.000000             0.994987          0.9951             0.997016                1.000000    0.995044
+lstm_ensemble_15000            0.005097             1.000000          0.0000             0.000000                0.000000    0.000000
+ddu_bert_15000                 0.005046             1.000000          1.0000             0.000000                0.000000    0.326468
+bayesian_lstm_15000            0.004342             1.000000          1.0000             1.000000                0.241595    0.993441
+variational_bert_15000         0.002497             1.000000          1.0000             1.000000                1.000000    0.992349
+lstm_15000                     0.005064             1.000000          1.0000             0.012369                0.017687    1.000000
+
+id_coverage_width
+                        sngp_bert_15000  lstm_ensemble_15000  ddu_bert_15000  bayesian_lstm_15000  variational_bert_15000  lstm_15000
+sngp_bert_15000                1.000000             0.994983        0.994981             0.995346                     1.0         0.0
+lstm_ensemble_15000            0.005023             1.000000        0.995097             0.000000                     0.0         0.0
+ddu_bert_15000                 0.005024             0.005258        1.000000             0.000000                     0.0         0.0
+bayesian_lstm_15000            0.004899             1.000000        1.000000             1.000000                     0.0         0.0
+variational_bert_15000         0.003171             1.000000        1.000000             1.000000                     1.0         0.0
+lstm_15000                     1.000000             1.000000        1.000000             1.000000                     1.0         1.0
+
+id_ece
+                        sngp_bert_15000  lstm_ensemble_15000  ddu_bert_15000  bayesian_lstm_15000  variational_bert_15000  lstm_15000
+sngp_bert_15000                1.000000             0.994997        0.995024             0.997874                     1.0    0.995097
+lstm_ensemble_15000            0.005020             1.000000        0.995376             0.000000                     0.0    0.000000
+ddu_bert_15000                 0.005012             0.005036        1.000000             0.000000                     0.0    0.000000
+bayesian_lstm_15000            0.003931             1.000000        1.000000             1.000000                     0.0    0.000000
+variational_bert_15000         0.001962             1.000000        1.000000             1.000000                     1.0    0.056191
+lstm_15000                     0.004988             1.000000        1.000000             1.000000                     1.0    1.000000
+
+auroc
+                                           sngp_bert_15000_dempster_shafer  lstm_ensemble_15000_dempster_shafer  ddu_bert_15000_max_prob  bayesian_lstm_15000_predictive_entropy  variational_bert_15000_mutual_information  lstm_15000_dempster_shafer
+sngp_bert_15000_dempster_shafer                                   1.000000                             0.994466                 0.994441                                0.994744                                   0.994846                    0.994803
+lstm_ensemble_15000_dempster_shafer                               0.009353                             1.000000                 0.000000                                0.000000                                   0.000000                    0.000000
+ddu_bert_15000_max_prob                                           0.009818                             1.000000                 1.000000                                0.000000                                   0.000000                    0.658120
+bayesian_lstm_15000_predictive_entropy                            0.009929                             1.000000                 1.000000                                1.000000                                   0.000000                    1.000000
+variational_bert_15000_mutual_information                         0.010759                             1.000000                 1.000000                                1.000000                                   1.000000                    0.996386
+lstm_15000_dempster_shafer                                        0.009566                             1.000000                 1.000000                                0.008899                                   0.006774                    1.000000
+
+id_ace
+                        sngp_bert_15000  lstm_ensemble_15000  ddu_bert_15000  bayesian_lstm_15000  variational_bert_15000  lstm_15000
+sngp_bert_15000                1.000000             0.000000        0.992338             0.000000                     0.0         0.0
+lstm_ensemble_15000            1.000000             1.000000        0.994875             0.000000                     0.0         0.0
+ddu_bert_15000                 0.015004             0.005442        1.000000             0.000000                     0.0         0.0
+bayesian_lstm_15000            1.000000             1.000000        1.000000             1.000000                     1.0         0.0
+variational_bert_15000         1.000000             1.000000        1.000000             0.875534                     1.0         0.0
+lstm_15000                     1.000000             1.000000        1.000000             1.000000                     1.0         1.0
+
+id_sce
+                        sngp_bert_15000  lstm_ensemble_15000  ddu_bert_15000  bayesian_lstm_15000  variational_bert_15000  lstm_15000
+sngp_bert_15000                1.000000             0.000000        0.993004                  0.0                0.000000         0.0
+lstm_ensemble_15000            1.000000             1.000000        0.994882                  0.0                0.000000         0.0
+ddu_bert_15000                 0.013226             0.005379        1.000000                  0.0                0.000000         0.0
+bayesian_lstm_15000            1.000000             1.000000        1.000000                  1.0                0.631253         0.0
+variational_bert_15000         1.000000             1.000000        1.000000                  1.0                1.000000         0.0
+lstm_15000                     1.000000             1.000000        1.000000                  1.0                1.000000         1.0
+
+id_kendalls_tau_seq
+                                 sngp_bert_15000_variance  lstm_ensemble_15000_variance  ddu_bert_15000_max_prob  bayesian_lstm_15000_max_prob  variational_bert_15000_max_prob  lstm_15000_max_prob
+sngp_bert_15000_variance                         1.000000                      0.994703                 0.994689                      0.994983                         0.998265             0.994709
+lstm_ensemble_15000_variance                     0.006209                      1.000000                 0.995031                      0.000000                         0.000000             1.000000
+ddu_bert_15000_max_prob                          0.006060                      0.005746                 1.000000                      0.000000                         0.000000             0.000000
+bayesian_lstm_15000_max_prob                     0.006200                      1.000000                 1.000000                      1.000000                         0.100710             0.995480
+variational_bert_15000_max_prob                  0.004624                      1.000000                 1.000000                      1.000000                         1.000000             0.991666
+lstm_15000_max_prob                              0.006229                      0.012245                 1.000000                      0.008812                         0.018728             1.000000
+
+macro_f1_scores
+                        sngp_bert_15000  lstm_ensemble_15000  ddu_bert_15000  bayesian_lstm_15000  variational_bert_15000  lstm_15000
+sngp_bert_15000                1.000000             0.995167         0.99533             0.997402                1.000000    0.995352
+lstm_ensemble_15000            0.005009             1.000000         0.10223             0.000000                0.000000    0.000000
+ddu_bert_15000                 0.005002             1.000000         1.00000             0.000000                0.000000    0.103011
+bayesian_lstm_15000            0.004191             1.000000         1.00000             1.000000                0.233268    0.994124
+variational_bert_15000         0.002310             1.000000         1.00000             1.000000                1.000000    0.992909
+lstm_15000                     0.004947             1.000000         1.00000             0.012414                0.017215    1.000000
+
+aupr
+                                           sngp_bert_15000_dempster_shafer  lstm_ensemble_15000_dempster_shafer  ddu_bert_15000_max_prob  bayesian_lstm_15000_mutual_information  variational_bert_15000_mutual_information  lstm_15000_dempster_shafer
+sngp_bert_15000_dempster_shafer                                   1.000000                              0.99493                 0.995173                                0.995261                                   0.994926                    0.994991
+lstm_ensemble_15000_dempster_shafer                               0.006732                              1.00000                 0.000000                                0.000000                                   0.000000                    0.000000
+ddu_bert_15000_max_prob                                           0.007058                              1.00000                 1.000000                                0.000000                                   0.000000                    0.073632
+bayesian_lstm_15000_mutual_information                            0.007177                              1.00000                 1.000000                                1.000000                                   0.000000                    1.000000
+variational_bert_15000_mutual_information                         0.008089                              1.00000                 1.000000                                1.000000                                   1.000000                    0.996661
+lstm_15000_dempster_shafer                                        0.007410                              1.00000                 1.000000                                0.088008                                   0.006169                    1.000000
+

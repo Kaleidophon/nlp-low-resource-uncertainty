@@ -53,6 +53,7 @@ TRAINING_SIZE_LINESTYLES = {
         4000: "solid",
     },
     "finnish_ud": {5000: "dotted", 7500: "dashed", 10000: "solid"},
+    "clinc_plus": {10000: "dotted", 12500: "dashed", 15000: "solid"},
 }
 plt.style.use("science")
 
@@ -226,6 +227,7 @@ if __name__ == "__main__":
         default=None,
         nargs="+",
     )
+    parser.add_argument("--identifier", type=str, default="")
     parser.add_argument("--training-sizes", type=int, nargs="+", default=tuple())
     parser.add_argument("--step-cutoff", type=int, default=None)
     parser.add_argument("--result-dir", type=str, default=RESULT_DIR)
@@ -244,7 +246,7 @@ if __name__ == "__main__":
             return False
 
         if not any(
-            [re.search(fr"\d+_{model}_\d", path) is not None for model in models]
+            [re.search(rf"\d+_{model}_\d", path) is not None for model in models]
         ):
             return False
 
@@ -294,14 +296,18 @@ if __name__ == "__main__":
 
         else:
             # Remove these columns before joining to avoid duplication
-            all_data = all_data.join(data)
+            try:
+                all_data = all_data.join(data)
+
+            except ValueError:
+                print(f"Duplicate data found for {model_name} {training_size}")
 
     # Aggregate measurements across runs
     for metric_column in metric_columns:
         run_columns = [
             column
             for column in all_data.columns
-            if re.match(fr"\d_{metric_column}", column)
+            if re.match(rf"\d_{metric_column}", column)
         ]
         all_data = all_data.assign(
             **{
@@ -327,5 +333,5 @@ if __name__ == "__main__":
         step_cutoff=args.step_cutoff,
         colors=MODEL_COLORS,
         metrics=args.metrics,
-        save_path=f"{args.output_dir}/{args.dataset}_{metric_model_infix}{args.target}.pdf",
+        save_path=f"{args.output_dir}/{args.dataset}_{args.identifier}_{args.target}.pdf",
     )

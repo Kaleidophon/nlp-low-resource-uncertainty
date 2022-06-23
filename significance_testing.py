@@ -10,11 +10,12 @@ import os
 import psutil
 import re
 from typing import List
-import sys
 
 # EXT
 from deepsig import multi_aso
 from nlp_uncertainty_zoo.config import AVAILABLE_MODELS
+import numpy as np
+from tqdm import tqdm
 
 # PROJECT
 from src.config import AVAILABLE_DATASETS
@@ -72,12 +73,21 @@ if __name__ == "__main__":
     data = defaultdict(lambda: defaultdict(list))
     found_metrics = set()
 
+    max_run_per_model = defaultdict(int)
+
     for result_path in result_paths:
-        _, training_size, model_name = (
-            re.compile(r"(.+?)_(\d+)_(.+)_\d{2}-\d{2}-\d{4}")
+        _, training_size, model_name, run = (
+            re.compile(r"(.+?)_(\d+)_(.+)_(\d)_\d{2}-\d{2}-\d{4}")
             .match(result_path)
             .groups()
         )
+        run = int(run)
+
+        if run < max_run_per_model[model_name]:
+            continue
+
+        max_run_per_model[model_name] = run
+
         training_size = int(training_size)
 
         if len(args.training_sizes) > 0 and training_size not in args.training_sizes:
@@ -116,8 +126,58 @@ if __name__ == "__main__":
                     found_metrics.add(name)
                     data[name][f"{model_name}_{training_size}"] = score
 
+    # For some of the evaluation metrics for which we have multiple measurements for every uncertainty metrics, take
+    # the best result per model
+    multi_metric_results = [
+        "auroc",
+        "aupr",
+        "id_kendalls_tau_max_seq",
+        "id_kendalls_tau_seq",
+        "ood_kendalls_tau_max_seq",
+        "ood_kendalls_tau_seq",
+    ]
+
+    if args.dataset != "clinc_plus":
+        multi_metric_results += ["id_kendalls_tau_token", "ood_kendalls_tau_token"]
+
+    for evaluation_metric in multi_metric_results:
+        metric_data = data[evaluation_metric]
+        best_scores_by_model, best_uncertainty_metric_by_model = (
+            defaultdict(lambda: [-100]),
+            {},
+        )
+
+        # Only keep the best results
+        for identifier, scores in metric_data.items():
+            model_name, training_size, metric_name = (
+                re.compile(r"(.+?)_(\d+)_(.+)").match(identifier).groups()
+            )
+
+            if np.mean(scores) > np.mean(best_scores_by_model[model_name]):
+                best_scores_by_model[model_name] = scores
+                best_uncertainty_metric_by_model[model_name] = metric_name
+
+        new_metric_data = {
+            f"{model_name}_{training_size}_{best_uncertainty_metric_by_model[model_name]}": scores
+            for model_name, scores in best_scores_by_model.items()
+        }
+        data[evaluation_metric] = new_metric_data
+
+    # Flip values for metrics that are lower to be better - ASO expects better model scores to be higher
+    for metric in [
+        "id_ece",
+        "id_sce",
+        "id_ace",
+        "ood_ece",
+        "ood_sce",
+        "ood_ace",
+        "id_coverage_width",
+        "ood_coverage_width",
+    ]:
+        for model, scores in data[metric].items():
+            data[metric][model] = -1 * np.array(scores)
+
     # Write stdout to file
-    sys.stdout = open(f"{args.output_dir}/{args.dataset}_significance_testing.txt", "w")
     num_jobs = psutil.cpu_count(logical=True)
 
     # Filter metrics
@@ -130,15 +190,15 @@ if __name__ == "__main__":
             filter(lambda metric: not metric.startswith("ood"), found_metrics)
         )
 
-    for metric in found_metrics:
-        print(metric)
-        result_df = multi_aso(
-            dict(data[metric]),
-            return_df=True,
-            num_jobs=num_jobs,
-            num_bootstrap_iterations=500,
-        )
-        print(result_df.to_string())
-        print("")
-
-    sys.stdout.close()
+    with open(
+        f"{args.output_dir}/{args.dataset}_significance_testing.txt", "w"
+    ) as out_file:
+        for metric in tqdm(found_metrics):
+            out_file.write(metric + "\n")
+            result_df = multi_aso(
+                dict(data[metric]),
+                return_df=True,
+                num_jobs=num_jobs,
+                show_progress=False,
+            )
+            out_file.write(result_df.to_string() + "\n\n")

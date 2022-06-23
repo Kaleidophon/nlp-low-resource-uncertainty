@@ -170,7 +170,7 @@ if __name__ == "__main__":
                 id_metric_marker = ""
                 ood_metric_marker = ""
 
-                if column in ["accuracy", "macro_f1_score"]:
+                if column in ["accuracy", "macro_f1_scores"]:
                     id_scores = data[model][column]
                     ood_scores = data[model][f"ood_{column}"]
 

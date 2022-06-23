@@ -76,7 +76,11 @@ MODEL_NAMES = {
     "variational_bert": "Variational Bert",
     "sngp_bert": "SNGP Bert",
 }
-TRAINING_SIZE_SCALES = {"dan+": [1000, 2000, 4000], "finnish_ud": [5000, 7500, 10000]}
+TRAINING_SIZE_SCALES = {
+    "dan+": [1000, 2000, 4000],
+    "finnish_ud": [5000, 7500, 10000],
+    "clinc_plus": [10000, 12500, 15000],
+}
 plt.style.use("science")
 
 
@@ -90,6 +94,7 @@ def plot_results(
     data,
     plot_ood=False,
     legend_loc: str = "upper right",
+    model_names: Optional[List[str]] = None,
     save_path: Optional[str] = None,
     model_colors: Dict[str, Tuple[str, str]] = MODEL_COLORS,
     metric_markers: Dict[str, str] = METRIC_MARKERS,
@@ -108,8 +113,9 @@ def plot_results(
 
     for model in data.keys():
         for a, training_size in zip(ax, sorted(data[model])):
+
             a.set_title(
-                training_size,
+                f"{training_size} instances",
                 loc="center",
                 fontdict={"alpha": 0.6, "fontsize": FONT_SIZE},
             )
@@ -188,7 +194,10 @@ def plot_results(
                         # color="black",
                         fill=True,
                     )
-                    a.add_patch(arrow)
+                    try:
+                        a.add_patch(arrow)
+                    except StopIteration:
+                        continue
 
     # ax.set_xlim([0, 1])
     # ax.set_ylim([0, 1])
@@ -196,6 +205,9 @@ def plot_results(
     ax[0].set_ylabel(y_label, alpha=0.6, fontsize=FONT_SIZE, labelpad=-2)
     # ax.legend(labels=data_labels, handles=handles, loc="upper left")
     # ax.axvline(x=2.5, c="black")
+
+    if model_names is None:
+        model_names = list(MODEL_NAMES.keys())
 
     # Create legend
     legend_elements = [
@@ -221,7 +233,7 @@ def plot_results(
                 label=MODEL_NAMES[model_name],
                 alpha=ALPHA,
             )
-            for model_name in list(MODEL_NAMES.keys())
+            for model_name in model_names
         ],
     ]
     # Add training sizes
@@ -301,8 +313,6 @@ if __name__ == "__main__":
     data = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     found_metrics = set()
 
-    # TODO: Potentially split by LSTM / transformers
-
     max_run_per_model = defaultdict(int)
 
     for result_path in result_paths:
@@ -331,6 +341,17 @@ if __name__ == "__main__":
 
                 data[model_name][training_size][name] = np.array(score)
 
+    model_names = None
+
+    if args.dataset == "clinc_plus":
+        model_names = [
+            "lstm",
+            "lstm_ensemble",
+            "bayesian_lstm",
+            "ddu_bert",
+            "variational_bert",
+        ]
+
     # Create plots
     plot_results(
         x_axis="macro_f1_scores",
@@ -340,6 +361,7 @@ if __name__ == "__main__":
         x_label="Macro F1 score",
         y_label="ID / OOD AUROC",
         data=data,
+        model_names=model_names,
         save_path=f"{IMG_DIR}/{args.dataset}_scatter_auroc.pdf",
         size_scales=TRAINING_SIZE_SCALES[args.dataset],
     )
@@ -352,48 +374,53 @@ if __name__ == "__main__":
         x_label="Macro F1 score",
         y_label="ID / OOD AUPR",
         data=data,
+        model_names=model_names,
         save_path=f"{IMG_DIR}/{args.dataset}_scatter_aupr.pdf",
         size_scales=TRAINING_SIZE_SCALES[args.dataset],
     )
 
     # Create ID / OOD plots
-    # TODO: Check for the kind of dataset
-    # TODO: Use new OOD test scares when available
-    plot_results(
-        x_axis="macro_f1_scores",
-        metric_prefix="",
-        metric_postfix="_kendalls_tau_token",
-        metrics=found_metrics,
-        x_label="Macro F1 score",
-        y_label="Token-level Kendall's tau",
-        data=data,
-        plot_ood=True,
-        save_path=f"{IMG_DIR}/{args.dataset}_scatter_kendalls_tau_token.pdf",
-        size_scales=TRAINING_SIZE_SCALES[args.dataset],
-        legend_loc="lower right",
-    )
+    if args.dataset != "clinc_plus":
+        plot_results(
+            x_axis="macro_f1_scores",
+            metric_prefix="",
+            metric_postfix="_kendalls_tau_token",
+            metrics=found_metrics,
+            x_label="Macro F1 score",
+            y_label="Token-level Kendall's tau",
+            data=data,
+            model_names=model_names,
+            plot_ood=True,
+            save_path=f"{IMG_DIR}/{args.dataset}_scatter_kendalls_tau_token.pdf",
+            size_scales=TRAINING_SIZE_SCALES[args.dataset],
+            legend_loc="lower right",
+        )
 
     plot_results(
         x_axis="macro_f1_scores",
-        metric_prefix="",
+        metric_prefix="" if args.dataset != "clinc_plus" else "id_",
         metric_postfix="_kendalls_tau_seq",
         metrics=list(found_metrics),
         x_label="Macro F1 score",
         y_label="Sequence-level Kendall's tau",
         data=data,
-        plot_ood=True,
+        model_names=model_names,
+        plot_ood=args.dataset != "clinc_plus",
         save_path=f"{IMG_DIR}/{args.dataset}_scatter_kendalls_tau_seq.pdf",
         size_scales=TRAINING_SIZE_SCALES[args.dataset],
     )
-    plot_results(
-        x_axis="macro_f1_scores",
-        metric_prefix="",
-        metric_postfix="_kendalls_tau_max_seq",
-        metrics=list(found_metrics),
-        x_label="Macro F1 score",
-        y_label="Sequence-level Kendall's tau (max)",
-        data=data,
-        plot_ood=True,
-        save_path=f"{IMG_DIR}/{args.dataset}_scatter_kendalls_tau_seq_max.pdf",
-        size_scales=TRAINING_SIZE_SCALES[args.dataset],
-    )
+
+    if args.dataset != "clinc_plus":
+        plot_results(
+            x_axis="macro_f1_scores",
+            metric_prefix="",
+            metric_postfix="_kendalls_tau_max_seq",
+            metrics=list(found_metrics),
+            x_label="Macro F1 score",
+            y_label="Sequence-level Kendall's tau (max)",
+            data=data,
+            model_names=model_names,
+            plot_ood=True,
+            save_path=f"{IMG_DIR}/{args.dataset}_scatter_kendalls_tau_seq_max.pdf",
+            size_scales=TRAINING_SIZE_SCALES[args.dataset],
+        )

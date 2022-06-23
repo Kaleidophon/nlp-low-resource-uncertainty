@@ -14,7 +14,7 @@ FINNISH_UD_MODEL_PARAMS = {
         "batch_size": 32,
         "sequence_length": 35,
         "early_stopping": True,
-        "weight_decay": 0.001337,
+        "weight_decay": 0.001204,
         "lr": 0.2205,
         "num_training_steps": 20955,  # Changed from 55 in original
         "validation_interval": 381,
