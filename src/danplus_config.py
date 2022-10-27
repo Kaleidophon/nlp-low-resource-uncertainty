@@ -212,6 +212,28 @@ DANPLUS_MODEL_PARAMS = {
         "kernel_type": "Matern32",
         "is_sequence_classifier": False,
     },
+    "dpp_bert": {
+        "bert_name": "alexanderfalk/danbert-small-cased",
+        "batch_size": 32,
+        "sequence_length": 128,
+        "lr": 0.00009742,
+        "weight_decay": 0.02731,
+        "num_training_steps": 2720,
+        "validation_interval": 1,  # 36, TODO
+        "grad_clip": 10,
+        "dropout": 0.4362,
+        "optimizer_class": optim.Adam,
+        "scheduler_class": transformers.get_linear_schedule_with_warmup,
+        "scheduler_step_or_epoch": "epoch",
+        "scheduler_kwargs": {
+            # Warmup prob: 0.1
+            "num_warmup_steps": 272,
+            "num_training_steps": 2720,
+        },
+        "output_size": 20,
+        "num_predictions": 10,
+        "is_sequence_classifier": False,
+    },
     "sngp_bert": {
         "bert_name": "alexanderfalk/danbert-small-cased",
         "batch_size": 32,

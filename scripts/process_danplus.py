@@ -5,7 +5,7 @@ NE tag per word and selecting the train file.
 
 import os
 
-DATA_DIR = "../data/raw/danish"
+DATA_DIR = "../data/raw/danplus"
 TARGET_DIR = "../data/processed/danplus"
 FILES = {
     "da_news_train.tsv": "train.csv",

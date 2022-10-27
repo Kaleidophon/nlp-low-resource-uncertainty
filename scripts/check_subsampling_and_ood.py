@@ -217,7 +217,7 @@ def create_id_ood_plot(
     fig.tight_layout()
 
     plt.savefig(
-        f"{IMG_PATH}/{target}_id_ood.pdf", format="pdf", dpi=300, bbox_inches="tight"
+        f"{IMG_PATH}/{target}_id_ood.pdf", format="pdf", dpi=120, bbox_inches="tight"
     )
 
 
@@ -352,7 +352,7 @@ def create_subsampled_plot(
     plt.savefig(
         f"{IMG_PATH}/{target}_subsampled.pdf",
         format="pdf",
-        dpi=300,
+        dpi=120,
         bbox_inches="tight",
     )
 

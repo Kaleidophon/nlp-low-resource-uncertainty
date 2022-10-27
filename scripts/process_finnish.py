@@ -5,7 +5,7 @@ Process the Finnish UD dataset.
 # STD
 import os
 
-DATA_DIR = "../data/raw/finnish"
+DATA_DIR = "../data/raw/finnish_ud"
 TARGET_DIR = "../data/processed/finnish_ud"
 FILES = {
     "fi_tdt-ud-train.conllu": "train.csv",

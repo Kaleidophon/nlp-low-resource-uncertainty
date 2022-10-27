@@ -27,7 +27,6 @@ TABLE_COLUMNS = [
     "macro_f1_scores",
     "ece",
     "sce",
-    "ace",
     "coverage_percentage",
     "coverage_width",
     "auroc",

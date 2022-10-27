@@ -93,7 +93,6 @@ def plot_results(
     metrics: List[str],
     data,
     plot_ood=False,
-    legend_loc: str = "upper right",
     model_names: Optional[List[str]] = None,
     save_path: Optional[str] = None,
     model_colors: Dict[str, Tuple[str, str]] = MODEL_COLORS,
@@ -106,10 +105,6 @@ def plot_results(
 
     for a in ax:
         a.grid(visible=True, axis="both", which="major", linestyle=":", color="grey")
-
-    # fig = plt.figure(figsize=(10, 7.5))
-    # ax = plt.gca()
-    # ax.grid(visible=True, axis="both", which="major", linestyle=":", color="grey")
 
     for model in data.keys():
         for a, training_size in zip(ax, sorted(data[model])):
@@ -199,12 +194,7 @@ def plot_results(
                     except StopIteration:
                         continue
 
-    # ax.set_xlim([0, 1])
-    # ax.set_ylim([0, 1])
-    # ax.set_xlabel(x_label, alpha=0.6, fontsize=12)
     ax[0].set_ylabel(y_label, alpha=0.6, fontsize=FONT_SIZE, labelpad=-2)
-    # ax.legend(labels=data_labels, handles=handles, loc="upper left")
-    # ax.axvline(x=2.5, c="black")
 
     if model_names is None:
         model_names = list(MODEL_NAMES.keys())
@@ -237,22 +227,6 @@ def plot_results(
         ],
     ]
     # Add training sizes
-    """
-    *[
-        Line2D(
-            [0],
-            [0],
-            markersize=np.sqrt(scale),
-            alpha=ALPHA,
-            markerfacecolor="black",
-            color="w",
-            label=size,
-            marker="o",
-        )
-        for size, scale in size_scales.items()
-    ],
-    """
-    # ]
     ax[-1].legend(
         bbox_to_anchor=(0.99, 1.05),
         handles=legend_elements,
@@ -261,14 +235,13 @@ def plot_results(
         fontsize=FONT_SIZE - 4,
         handlelength=0.75,
     )
-    # ax[0].ax.tick_params(axis='both', which='minor', labelsize=FONT_SIZE - 6)
 
     for a in ax:
         a.tick_params(axis="both", which="major", labelsize=FONT_SIZE - 4)
 
     fig.tight_layout(w_pad=0.95)
 
-    plt.savefig(save_path, format="pdf", dpi=300, bbox_inches="tight")
+    plt.savefig(save_path, format="pdf", dpi=120, bbox_inches="tight")
 
 
 if __name__ == "__main__":
@@ -393,7 +366,6 @@ if __name__ == "__main__":
             plot_ood=True,
             save_path=f"{IMG_DIR}/{args.dataset}_scatter_kendalls_tau_token.pdf",
             size_scales=TRAINING_SIZE_SCALES[args.dataset],
-            legend_loc="lower right",
         )
 
     plot_results(

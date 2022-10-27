@@ -7,11 +7,11 @@ from nlp_uncertainty_zoo.utils.samplers import (
     LanguageModellingSampler,
     SequenceClassificationSampler,
 )
-from nlp_uncertainty_zoo.config import AVAILABLE_DATASETS, DATASET_TASKS
 
 # PROJECT
 from src.clinc_config import CLINC_MODEL_PARAMS
 from src.data import (
+    DanPlusBuilder,
     EnglishWikiBuilder,
     SwahiliWikiBuilder,
     FinnishUDBuilder,
@@ -27,14 +27,14 @@ SamplerConfig = namedtuple("SamplerConfig", ["sampler_class", "sampler_kwargs"])
 
 # AVAILABLE DATASETS AND MODELS
 AVAILABLE_DATASETS = {
-    **AVAILABLE_DATASETS,
+    "dan+": DanPlusBuilder,
     "enwiki": EnglishWikiBuilder,
     "swwiki": SwahiliWikiBuilder,
     "finnish_ud": FinnishUDBuilder,
     "clinc_plus": ClincPlusBuilder,
 }
 DATASET_TASKS = {
-    **DATASET_TASKS,
+    "dan+": "token_classification",
     "enwiki": "language_modelling",
     "swwiki": "language_modelling",
     "finnish_ud": "token_classification",

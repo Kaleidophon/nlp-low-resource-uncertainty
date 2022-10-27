@@ -210,6 +210,27 @@ CLINC_MODEL_PARAMS = {
         "kernel_type": "Matern32",
         "is_sequence_classifier": True,
     },
+    "dpp_bert": {
+        "bert_name": "TurkuNLP/bert-base-finnish-cased-v1",
+        "batch_size": 64,
+        "sequence_length": 128,
+        "lr": 0.00003483,
+        "num_training_steps": 7620,
+        "validation_interval": 381,
+        "grad_clip": 10,
+        "dropout": 0.4364,
+        "weight_decay": 0.09927,
+        "optimizer_class": optim.Adam,
+        "scheduler_class": transformers.get_linear_schedule_with_warmup,
+        "scheduler_kwargs": {
+            # Warmup prob: 0.1
+            "num_warmup_steps": 762,
+            "num_training_steps": 7620,
+        },
+        "output_size": 16,
+        "num_predictions": 10,
+        "is_sequence_classifier": False,
+    },
     "ddu_bert": {
         "bert_name": "bert-base-uncased",
         "ignore_indices": [-100, 0, 101, 102, 103],
