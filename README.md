@@ -70,7 +70,11 @@ Next, we will walk you through the different steps necessary to replicate the fi
 
 In order to replicate our findings, download the Clinc Plus, Dan+ and Finnish UD dataset from the links below:
 
-  @TODO
+  * **Clinc Plus**: https://github.com/clinc/oos-eval
+  * **Dan+**: https://github.com/bplank/DaNplus
+  * **Finnish UD**: 
+    * Training, validation and test split: https://github.com/UniversalDependencies/UD_Finnish-TDT
+    * OOD test set: https://github.com/UniversalDependencies/UD_Finnish-OOD
 
 Then, place them in the ``data/raw/`` directory, in folders called ``clinc``, ``clinc_plus``, ``danplus`` and ``finnish_ud``.
 
@@ -94,60 +98,89 @@ Nevertheless, the code is supposed to run even without this step.
 
 ### Hyperparameter Search
 
-@TODO
+Hyperparameter search is conducted through [Weights & Biases' sweep functionality](https://wandb.ai/site/sweeps). 
+For that purpose, hyperparameter search ranges for every model and dataset can be found in `sweeps/<dataset_name>/sweep_<model_name>_<dataset_name>.yaml`.
+
+All the logic for the hyperparameter search is defined in `hyperparameter.search.py`, which is called through running `sweep.py`.
+To run a hyperparameter search, run something similar to the command below:
+
+  python3 sweep.py sweeps/clinc_plus/sweep_lstm_clinc_plus.yaml 30
+
+which will perform a hyperparameter search for the LSTM on Clinc Plus for 30 trials in total.
 
 ### Model Training
 
-@TODO
+Model training is performed by running `run_experiments.py`. The most important arguments are the following:
+  * `--dataset`: Specify the name of the dataset the model should be trained on. Can be `dan+`, `finnish_ud` or `clinc_plus`.
+  * `--model`: Specify the name of the model to be trained. Can be any of the models defined in [``nlp-uncertainty-zoo``](https://github.com/Kaleidophon/nlp-uncertainty-zoo).
+  * `--device`: Define the device the model should be trained on for PyTorch, e.g. `cpu` or `cuda`.
+  * `--training-size`: Define the size the training set should be subsampled into.
+  * `--runs`: Number of runs per model. In the paper, five different seeds per model were trained.
 
 ### Validation of Subsets / OOD Test Sets
 
-@TODO
+This part involves two parts: Measuring perplexities of in- and out-of-distribution splits as well as plotting some of their properties.
+For the first part, make sure to provide a local installation of [SRILM](http://www.speech.sri.com/projects/srilm/). Then run 
 
+    `cd scripts/`
+    `python3 get_ngram_ppl.py`
+
+Where results will be saved to `results/subsampling_verification/<dataset_name>_results.txt`. For the second part, run 
+
+    `cd scripts`
+    `python3 check_subsampling_and_ood.py`
+
+and resulting plots will be saved as `img/{label/seq/token}_freqs_{id_ood/subsampled}.pdf`.
 
 ### Significance testing
 
-@TODO
+Significance testing is performed using the Almost Stochastic Order (ASO) test, as implemented in [deep-significance](https://github.com/Kaleidophon/deep-significance).
+To execute the significance testing, it is required to have the corresponding `<dataset_name>_<dataset_size>_<model_name>_<run>_<timestamp>_scores.pkl` files in the `results/` folder.
+Then, run 
+
+  `python3 significance_testing.py --dataset <dataset_name> --training-sizes <dataset_size>`
+
+and the corresponding results will be saved into `results/significance_testing/<dataset_name>_significance_testing.txt`.
 
 ### Figures
 
 To re-run the hyperparameter search, or to train the different models and regenerate results, please refer to the sections
 [Hyperparameter Search](#hyperparameter-search) and [Model Training](#model-training) above. We now list below the figures in the paper, and the necessary scripts and exact arguments to reproduce them:
 
-* *Table 2*: Run `python3 format_results.py` specifying the dataset name and training set size. For the paper, these were
+* **Table 2**: Run `python3 format_results.py` specifying the dataset name and training set size. For the paper, these were
   * `python3 format_results.py --dataset clinc_plus --training-sizes 15000`
   * `python3 format_results.py --dataset finnish_ud --training-sizes 10000`
   * `python3 format_results.py --dataset danplus --training-sizes 4000`
   * Significant results were highlighted manually. To reproduce them, run 
     * `python3 significance_testing.py --dataset clinc_plus --training-sizes 15000`
-    * `python3 significance_testing.py --dataset finnish_ud --training-sizes 15000`
-    * `python3 significance_testing.py --dataset danplus --training-sizes 15000`
-* *Figure 2*: This requires running `visualize_results.py` specifying the dataset name. For the paper, these were
+    * `python3 significance_testing.py --dataset finnish_ud --training-sizes 10000`
+    * `python3 significance_testing.py --dataset danplus --training-sizes 4000`
+* **Figure 2**: This requires running `visualize_results.py` specifying the dataset name. For the paper, these were
   * `python3 visualize_results.py --dataset clinc_plus`
   * `python3 visualize_results.py --dataset finnish_ud`
   * `python3 visualize_results.py --dataset danplus`
   * Afterwards, results are found in `img/scatter_plots/`.
-* *Figure 3*: This script is slightly more involved, since it includes a lot of different parameters. We report the exact parameters below:
-  * *Figure 3 (b)*: `python3 plot_metrics_over_time.py --dataset dan+ --models lstm lstm_ensemble ddu_bert --target kendalls_tau_seq --target-name "Sequence-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 2500 --identifier selection`
-  * *Figure 3 (a)*: `python3 plot_metrics_over_time.py --dataset dan+ --models lstm lstm_ensemble ddu_bert --target kendalls_tau_token --target-name "Token-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 2500 --identifier selection`
-* *Figure 4*:
-  * *Figure 4 (a)*: `python3 qualitative_analysis.py --dataset dan+ --metrics predictive_entropy --training-sizes 4000 --top-n 40 --normalize`
-  * *Figure 4 (b)*: `python3 qualitative_analysis.py --dataset finnish_ud --metrics mutual_information predictive_entropy --models variational_lstm sngp_bert lstm_ensemble variational_bert --training-sizes 10000 --top-n 40`
+* **Figure 3**: This script is slightly more involved, since it includes a lot of different parameters. We report the exact parameters below:
+  * **Figure 3 (b)**: `python3 plot_metrics_over_time.py --dataset dan+ --models lstm lstm_ensemble ddu_bert --target kendalls_tau_seq --target-name "Sequence-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 2500 --identifier selection`
+  * **Figure 3 (a)**: `python3 plot_metrics_over_time.py --dataset dan+ --models lstm lstm_ensemble ddu_bert --target kendalls_tau_token --target-name "Token-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 2500 --identifier selection`
+* **Figure 4**:
+  * **Figure 4 (a)**: `python3 qualitative_analysis.py --dataset dan+ --metrics predictive_entropy --training-sizes 4000 --top-n 40 --normalize`
+  * **Figure 4 (b)**: `python3 qualitative_analysis.py --dataset finnish_ud --metrics mutual_information predictive_entropy --models variational_lstm sngp_bert lstm_ensemble variational_bert --training-sizes 10000 --top-n 40`
   * Result will be saved in `img/qualitative/<dataset_name>/`. Note that sequences will be randomly sampled from the test set every time.
-* *Figures 5 - 10*: These figures are all plotted and saved into `img/` by running the commands below:
+* **Figures 5 - 10**: These figures are all plotted and saved into `img/` by running the commands below:
   * `cd scripts`
   * `python3 check_subsampling_and_ood.py`
-* *Table 3*: These results are saved in `results/subsampling_verification/<dataset_name>_results.txt`. To reproduce them, run
+* **Table 3**: These results are saved in `results/subsampling_verification/<dataset_name>_results.txt`. To reproduce them, run
   * `cd scripts/`
   * `python3 get_ngram_ppl.py`
   * Be aware that this requires a functioning installation of [SRILM](http://www.speech.sri.com/projects/srilm/) on your system.
-* *Table 4*: Hyperparameter search ranges are defined in `sweeps/<dataset_name>/sweep_<model_name>_<dataset_name>.yaml`.
-* *Table 5*: All used hyperparameters can also be found in `src/<dataset_name>_config.py`.
-* *Figure 11-14*: Same as Figure 2. 
-* *Figure 15 + 16*: Same as Figure 3. We report the exact arguments for the script below:
-  * *Figure 15 (a): `python3 plot_metrics_over_time.py --dataset dan+ --models lstm lstm_ensemble st_tau_lstm variational_lstm bayesian_lstm variational_bert ddu_bert sngp_bert --target kendalls_tau_token --target-name "Token-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 2500 --identifier all`
-  * *Figure 15 (b)*:`python3 plot_metrics_over_time.py --dataset finnish_ud --models lstm lstm_ensemble st_tau_lstm variational_lstm bayesian_lstm variational_bert ddu_bert sngp_bert --target kendalls_tau_token --target-name "Token-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 7000 --identifier all`
-  * *Figure 16 (a)*: `python3 plot_metrics_over_time.py --dataset clinc_plus --models lstm lstm_ensemble bayesian_lstm variational_bert ddu_bert --target kendalls_tau_seq --target-name "Sequence-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 7000 --identifier all`
-  * *Figure 16 (b)*: `python3 plot_metrics_over_time.py --dataset dan+ --models lstm lstm_ensemble st_tau_lstm variational_lstm bayesian_lstm variational_bert ddu_bert sngp_bert --target kendalls_tau_seq --target-name"Sequence-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 2500 --identifier all`
-  * *Figure 16 (c)*: `python3 plot_metrics_over_time.py --dataset finnish_ud --models lstm lstm_ensemble st_tau_lstm variational_lstm bayesian_lstm variational_bert ddu_bert sngp_bert --target kendalls_tau_seq --target-name "Sequence-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 7000 --identifier all`
-* *Figure 17 + 18*: Same as Figure 4.
+* **Table 4**: Hyperparameter search ranges are defined in `sweeps/<dataset_name>/sweep_<model_name>_<dataset_name>.yaml`.
+* **Table 5**: All used hyperparameters can also be found in `src/<dataset_name>_config.py`.
+* **Figure 11 - 14**: Same as Figure 2. 
+* **Figure 15 + 16**: Same as Figure 3. We report the exact arguments for the script below:
+  * **Figure 15 (a)**: `python3 plot_metrics_over_time.py --dataset dan+ --models lstm lstm_ensemble st_tau_lstm variational_lstm bayesian_lstm variational_bert ddu_bert sngp_bert --target kendalls_tau_token --target-name "Token-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 2500 --identifier all`
+  * **Figure 15 (b)**:`python3 plot_metrics_over_time.py --dataset finnish_ud --models lstm lstm_ensemble st_tau_lstm variational_lstm bayesian_lstm variational_bert ddu_bert sngp_bert --target kendalls_tau_token --target-name "Token-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 7000 --identifier all`
+  * **Figure 16 (a)**: `python3 plot_metrics_over_time.py --dataset clinc_plus --models lstm lstm_ensemble bayesian_lstm variational_bert ddu_bert --target kendalls_tau_seq --target-name "Sequence-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 7000 --identifier all`
+  * **Figure 16 (b)**: `python3 plot_metrics_over_time.py --dataset dan+ --models lstm lstm_ensemble st_tau_lstm variational_lstm bayesian_lstm variational_bert ddu_bert sngp_bert --target kendalls_tau_seq --target-name"Sequence-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 2500 --identifier all`
+  * **Figure 16 (c)**: `python3 plot_metrics_over_time.py --dataset finnish_ud --models lstm lstm_ensemble st_tau_lstm variational_lstm bayesian_lstm variational_bert ddu_bert sngp_bert --target kendalls_tau_seq --target-name "Sequence-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 7000 --identifier all`
+* **Figure 17 + 18**: Same as Figure 4.

@@ -13,10 +13,9 @@ import subprocess
 import wandb
 
 # PROJECT
-from secret import WANDB_API_KEY
+from secret import WANDB_API_KEY, WANDB_USER_NAME
 
 # CONST
-USER_NAME = "kaleidophon"
 PROJECT_NAME = "nlp-low-resource-uncertainty"
 
 
@@ -36,7 +35,7 @@ if __name__ == "__main__":
         [
             "wandb",
             "agent",
-            f"{USER_NAME}/{PROJECT_NAME}/{sweep_id}",
+            f"{WANDB_USER_NAME}/{PROJECT_NAME}/{sweep_id}",
             "--count",
             num_runs,
         ]
