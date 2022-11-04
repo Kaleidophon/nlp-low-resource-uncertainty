@@ -1,7 +1,5 @@
 # Exploring Predictive Uncertainty and Calibration in NLP: A Study on the Impact of Method & Data Scarcity
 
-### *Warning: The documentation below is still work-in-progress, but will be completed soon (I promise!)* 
-
 This repository contains the code of the EMNLP 2022 paper [*"Exploring Predictive Uncertainty and Calibration in NLP: A Study on the Impact of Method & Data Scarcity"*](https://arxiv.org/abs/2210.15452) by
 Dennis Ulmer, Jes Frellsen und Christian Hardmeier. 
 
