@@ -12,8 +12,6 @@ from nlp_uncertainty_zoo.utils.samplers import (
 from src.clinc_config import CLINC_MODEL_PARAMS
 from src.data import (
     DanPlusBuilder,
-    EnglishWikiBuilder,
-    SwahiliWikiBuilder,
     FinnishUDBuilder,
     ClincPlusBuilder,
 )
@@ -27,15 +25,11 @@ SamplerConfig = namedtuple("SamplerConfig", ["sampler_class", "sampler_kwargs"])
 # AVAILABLE DATASETS AND MODELS
 AVAILABLE_DATASETS = {
     "dan+": DanPlusBuilder,
-    "enwiki": EnglishWikiBuilder,
-    "swwiki": SwahiliWikiBuilder,
     "finnish_ud": FinnishUDBuilder,
     "clinc_plus": ClincPlusBuilder,
 }
 DATASET_TASKS = {
     "dan+": "token_classification",
-    "enwiki": "language_modelling",
-    "swwiki": "language_modelling",
     "finnish_ud": "token_classification",
     "clinc_plus": "sequence_classification",
 }
@@ -57,18 +51,6 @@ DATASET_SAMPLE_CONFIGS = {
         sampler_kwargs={
             "train": {
                 "target_size": train_size,
-                "num_jobs": 4,
-            },
-        }
-        if train_size is not None
-        else {},
-    ),
-    "enwiki": lambda train_size: SamplerConfig(
-        sampler_class=LanguageModellingSampler,
-        sampler_kwargs={
-            "train": {
-                "target_size": train_size,
-                "sample_range": [0, 3],
                 "num_jobs": 4,
             },
         }

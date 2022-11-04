@@ -68,8 +68,11 @@ Next, we will walk you through the different steps necessary to replicate the fi
 
 ### Data
 
-In order to replicate our findings, download the Clinc Plus, Dan+ and Finnish UD dataset (@TODO: Add links), 
-and place them in the ``data/raw/`` directory, in folders called ``clinc``, ``clinc_plus``, ``danplus`` and ``finnish_ud``.
+In order to replicate our findings, download the Clinc Plus, Dan+ and Finnish UD dataset from the links below:
+
+  @TODO
+
+Then, place them in the ``data/raw/`` directory, in folders called ``clinc``, ``clinc_plus``, ``danplus`` and ``finnish_ud``.
 
 You can then preprocess the data by running the following commands:
 
@@ -108,17 +111,43 @@ Nevertheless, the code is supposed to run even without this step.
 
 ### Figures
 
-We list below the figures in the paper, and the necessary scripts to reproduce them:
+To re-run the hyperparameter search, or to train the different models and regenerate results, please refer to the sections
+[Hyperparameter Search](#hyperparameter-search) and [Model Training](#model-training) above. We now list below the figures in the paper, and the necessary scripts and exact arguments to reproduce them:
 
 * *Table 2*: Run `python3 format_results.py` specifying the dataset name and training set size. For the paper, these were
-    * `python3 format_results.py --dataset clinc_plus --training-sizes 15000`
-    * `python3 format_results.py --dataset finnish_ud --training-sizes 10000`
-    * `python3 format_results.py --dataset danplus --training-sizes 4000`
-* *Figure 2*:
-* *Figure 3*:
+  * `python3 format_results.py --dataset clinc_plus --training-sizes 15000`
+  * `python3 format_results.py --dataset finnish_ud --training-sizes 10000`
+  * `python3 format_results.py --dataset danplus --training-sizes 4000`
+  * Significant results were highlighted manually. To reproduce them, run 
+    * `python3 significance_testing.py --dataset clinc_plus --training-sizes 15000`
+    * `python3 significance_testing.py --dataset finnish_ud --training-sizes 15000`
+    * `python3 significance_testing.py --dataset danplus --training-sizes 15000`
+* *Figure 2*: This requires running `visualize_results.py` specifying the dataset name. For the paper, these were
+  * `python3 visualize_results.py --dataset clinc_plus`
+  * `python3 visualize_results.py --dataset finnish_ud`
+  * `python3 visualize_results.py --dataset danplus`
+  * Afterwards, results are found in `img/scatter_plots/`.
+* *Figure 3*: This script is slightly more involved, since it includes a lot of different parameters. We report the exact parameters below:
+  * *Figure 3 (b)*: `python3 plot_metrics_over_time.py --dataset dan+ --models lstm lstm_ensemble ddu_bert --target kendalls_tau_seq --target-name "Sequence-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 2500 --identifier selection`
+  * *Figure 3 (a)*: `python3 plot_metrics_over_time.py --dataset dan+ --models lstm lstm_ensemble ddu_bert --target kendalls_tau_token --target-name "Token-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 2500 --identifier selection`
 * *Figure 4*:
-* *Figures 5 - 10*:
-* *Table 3*:  
-* *Figure 12-15*: 
-* *Figure 16-17*: 
-* *Figure 18-19*: 
+  * *Figure 4 (a)*: `python3 qualitative_analysis.py --dataset dan+ --metrics predictive_entropy --training-sizes 4000 --top-n 40 --normalize`
+  * *Figure 4 (b)*: `python3 qualitative_analysis.py --dataset finnish_ud --metrics mutual_information predictive_entropy --models variational_lstm sngp_bert lstm_ensemble variational_bert --training-sizes 10000 --top-n 40`
+  * Result will be saved in `img/qualitative/<dataset_name>/`. Note that sequences will be randomly sampled from the test set every time.
+* *Figures 5 - 10*: These figures are all plotted and saved into `img/` by running the commands below:
+  * `cd scripts`
+  * `python3 check_subsampling_and_ood.py`
+* *Table 3*: These results are saved in `results/subsampling_verification/<dataset_name>_results.txt`. To reproduce them, run
+  * `cd scripts/`
+  * `python3 get_ngram_ppl.py`
+  * Be aware that this requires a functioning installation of [SRILM](http://www.speech.sri.com/projects/srilm/) on your system.
+* *Table 4*: Hyperparameter search ranges are defined in `sweeps/<dataset_name>/sweep_<model_name>_<dataset_name>.yaml`.
+* *Table 5*: All used hyperparameters can also be found in `src/<dataset_name>_config.py`.
+* *Figure 11-14*: Same as Figure 2. 
+* *Figure 15 + 16*: Same as Figure 3. We report the exact arguments for the script below:
+  * *Figure 15 (a): `python3 plot_metrics_over_time.py --dataset dan+ --models lstm lstm_ensemble st_tau_lstm variational_lstm bayesian_lstm variational_bert ddu_bert sngp_bert --target kendalls_tau_token --target-name "Token-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 2500 --identifier all`
+  * *Figure 15 (b)*:`python3 plot_metrics_over_time.py --dataset finnish_ud --models lstm lstm_ensemble st_tau_lstm variational_lstm bayesian_lstm variational_bert ddu_bert sngp_bert --target kendalls_tau_token --target-name "Token-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 7000 --identifier all`
+  * *Figure 16 (a)*: `python3 plot_metrics_over_time.py --dataset clinc_plus --models lstm lstm_ensemble bayesian_lstm variational_bert ddu_bert --target kendalls_tau_seq --target-name "Sequence-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 7000 --identifier all`
+  * *Figure 16 (b)*: `python3 plot_metrics_over_time.py --dataset dan+ --models lstm lstm_ensemble st_tau_lstm variational_lstm bayesian_lstm variational_bert ddu_bert sngp_bert --target kendalls_tau_seq --target-name"Sequence-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 2500 --identifier all`
+  * *Figure 16 (c)*: `python3 plot_metrics_over_time.py --dataset finnish_ud --models lstm lstm_ensemble st_tau_lstm variational_lstm bayesian_lstm variational_bert ddu_bert sngp_bert --target kendalls_tau_seq --target-name "Sequence-level Kendall's tau" --metrics ood_predictive_entropy --step-cutoff 7000 --identifier all`
+* *Figure 17 + 18*: Same as Figure 4.
