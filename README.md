@@ -104,7 +104,7 @@ For that purpose, hyperparameter search ranges for every model and dataset can b
 All the logic for the hyperparameter search is defined in `hyperparameter.search.py`, which is called through running `sweep.py`.
 To run a hyperparameter search, run something similar to the command below:
 
-  python3 sweep.py sweeps/clinc_plus/sweep_lstm_clinc_plus.yaml 30
+    python3 sweep.py sweeps/clinc_plus/sweep_lstm_clinc_plus.yaml 30
 
 which will perform a hyperparameter search for the LSTM on Clinc Plus for 30 trials in total.
 
@@ -122,13 +122,13 @@ Model training is performed by running `run_experiments.py`. The most important 
 This part involves two parts: Measuring perplexities of in- and out-of-distribution splits as well as plotting some of their properties.
 For the first part, make sure to provide a local installation of [SRILM](http://www.speech.sri.com/projects/srilm/). Then run 
 
-    `cd scripts/`
-    `python3 get_ngram_ppl.py`
+      cd scripts/
+      python3 get_ngram_ppl.py
 
 Where results will be saved to `results/subsampling_verification/<dataset_name>_results.txt`. For the second part, run 
 
-    `cd scripts`
-    `python3 check_subsampling_and_ood.py`
+      cd scripts
+      python3 check_subsampling_and_ood.py
 
 and resulting plots will be saved as `img/{label/seq/token}_freqs_{id_ood/subsampled}.pdf`.
 
@@ -138,7 +138,7 @@ Significance testing is performed using the Almost Stochastic Order (ASO) test, 
 To execute the significance testing, it is required to have the corresponding `<dataset_name>_<dataset_size>_<model_name>_<run>_<timestamp>_scores.pkl` files in the `results/` folder.
 Then, run 
 
-  `python3 significance_testing.py --dataset <dataset_name> --training-sizes <dataset_size>`
+    python3 significance_testing.py --dataset <dataset_name> --training-sizes <dataset_size>
 
 and the corresponding results will be saved into `results/significance_testing/<dataset_name>_significance_testing.txt`.
 
